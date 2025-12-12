@@ -1,0 +1,35 @@
+walk = "git"
+
+[formatter.biome]
+command = "biome"
+options = ["format", "--write"]
+includes = ["*.json"]
+
+[formatter.deno]
+command = "deno"
+includes = ["*.ts"]
+options = ["fmt"]
+
+[formatter.formatjson5]
+command = "formatjson5"
+includes = ["*.json5"]
+options = ["--replace", "--indent", "2"]
+
+[formatter.rumdk]
+command = "rumdl"
+options = ["fmt"]
+includes = ["*.md"]
+
+[formatter.tombi]
+command = "tombi"
+includes = ["*.toml"]
+options = ["format"]
+
+[formatter.toml-sort]
+command = "toml-sort"
+includes = ["*.toml"]
+options = ["--in-place"]
+
+[formatter.yamlfmt]
+command = "yamlfmt"
+includes = ["*.yaml", "*.yml"]
