@@ -14,6 +14,16 @@ import { collectGlobal, collectLocal } from "./user-define.ts";
 type Params = Record<string, unknown>;
 
 export class Source extends BaseSource<Params> {
+  #home: string;
+  #configDir: string;
+
+  constructor() {
+    super();
+    this.#home = Deno.env.get("HOME") ?? "";
+    this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ??
+      join(this.#home, ".claude");
+  }
+
   override async gather(args: {
     denops: Denops;
     options: DdcOptions;
@@ -21,12 +31,9 @@ export class Source extends BaseSource<Params> {
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
-    const home = Deno.env.get("HOME") ?? "";
-    const configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ??
-      join(home, ".claude");
     const [global, local] = await Promise.all([
-      collectGlobal(configDir),
-      collectLocal(await getcwd(args.denops), home),
+      collectGlobal(this.#configDir),
+      collectLocal(await getcwd(args.denops), this.#home),
     ]);
     return [...builtins, ...global, ...local];
   }
