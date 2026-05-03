@@ -150,20 +150,25 @@ async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
 }
 
 async function readDescription(path: string): Promise<string> {
-  let text: string;
-  try {
-    text = await Deno.readTextFile(path);
-  } catch {
-    return "";
-  }
+  const text = await (async () => {
+    try {
+      return await Deno.readTextFile(path);
+    } catch {
+      return "";
+    }
+  })();
   if (!hasFrontmatter(text, ["yaml"])) {
     return "";
   }
-  let attrs: Record<string, unknown>;
-  try {
-    attrs = extract<Record<string, unknown>>(text).attrs;
-  } catch (err) {
-    console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+  const attrs = (() => {
+    try {
+      return extract<Record<string, unknown>>(text).attrs;
+    } catch (err) {
+      console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+      return null;
+    }
+  })();
+  if (attrs === null) {
     return "";
   }
   const description = attrs["description"];
