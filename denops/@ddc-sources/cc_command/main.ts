@@ -13,6 +13,13 @@ import { collectGlobal, collectLocal } from "./user-define.ts";
 
 type Params = Record<string, unknown>;
 
+/**
+ * ddc.vim source that provides Claude Code slash command completion.
+ *
+ * Gathers built-in commands together with user-defined commands and skills
+ * found under the global Claude config directory and the nearest project-local
+ * `.claude` directory.
+ */
 export class Source extends BaseSource<Params> {
   #home: string;
   #configDir: string;
@@ -24,6 +31,11 @@ export class Source extends BaseSource<Params> {
       join(this.#home, ".claude");
   }
 
+  /**
+   * Returns the full set of completion candidates for the current buffer.
+   *
+   * @param args ddc gather arguments supplied by the host.
+   */
   override async gather(args: {
     denops: Denops;
     options: DdcOptions;

@@ -1,5 +1,11 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 
+/**
+ * Built-in Claude Code slash commands shipped with the CLI itself.
+ *
+ * Each entry pairs the slash word that triggers completion with a short
+ * description used as the candidate's `info` text.
+ */
 export const builtins = [
   { word: "/add-dir", info: "Add a working directory for file access" },
   { word: "/agents", info: "Manage agent configurations" },

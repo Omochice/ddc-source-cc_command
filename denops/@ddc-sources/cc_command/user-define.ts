@@ -5,6 +5,15 @@ import { dirname, join, resolve } from "jsr:@std/path@1.1.4";
 
 const MAX_COMMAND_DEPTH = 16;
 
+/**
+ * Collects user-defined commands and skills under a Claude config directory.
+ *
+ * Reads `<configDir>/commands` recursively and `<configDir>/skills` at one
+ * level, returning ddc completion items. Missing directories yield an empty
+ * list rather than an error.
+ *
+ * @param configDir Absolute path to a Claude config directory (e.g. `~/.claude`).
+ */
 export async function collectGlobal(configDir: string): Promise<Item[]> {
   const [commands, skills] = await Promise.all([
     collectCommands(join(configDir, "commands"), []),
@@ -103,6 +112,16 @@ async function resolveKind(
   }
 }
 
+/**
+ * Collects commands and skills from the nearest project-local `.claude`.
+ *
+ * Walks up from `startDir` toward the filesystem root, returning items from
+ * the first ancestor that contains a `.claude` directory. Stops at `homeDir`
+ * so that the user's global config is never picked up as project-local.
+ *
+ * @param startDir Directory to start searching from (typically the cwd).
+ * @param homeDir The user's home directory; the search never enters or passes it.
+ */
 export async function collectLocal(
   startDir: string,
   homeDir: string,
