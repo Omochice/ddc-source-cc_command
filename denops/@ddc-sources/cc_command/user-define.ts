@@ -1,7 +1,7 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 
 export function collectGlobal(_configDir: string): Promise<Item[]> {
-  throw new Error("not implemented");
+  return Promise.resolve([]);
 }
 
 export function collectLocal(
