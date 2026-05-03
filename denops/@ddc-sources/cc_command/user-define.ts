@@ -9,12 +9,12 @@ export async function collectGlobal(configDir: string): Promise<Item[]> {
 
   const skillsDir = join(configDir, "skills");
   for await (const entry of safeReadDir(skillsDir)) {
-    if (!entry.isDirectory) continue;
     if (entry.name.startsWith(".")) continue;
+    const path = join(skillsDir, entry.name);
+    const kind = await resolveKind(entry, path);
+    if (kind !== "directory") continue;
     const word = "/" + entry.name;
-    const description = await readDescription(
-      join(skillsDir, entry.name, "SKILL.md"),
-    );
+    const description = await readDescription(join(path, "SKILL.md"));
     const info = description === "" ? "" : `${description} (skill)`;
     items.push({ word, info });
   }
@@ -30,15 +30,33 @@ async function collectCommands(
   for await (const entry of safeReadDir(dir)) {
     if (entry.name.startsWith(".")) continue;
     const path = join(dir, entry.name);
-    if (entry.isDirectory) {
+    const kind = await resolveKind(entry, path);
+    if (kind === "directory") {
       await collectCommands(path, [...segments, entry.name], out);
       continue;
     }
-    if (!entry.isFile || !entry.name.endsWith(".md")) continue;
+    if (kind !== "file" || !entry.name.endsWith(".md")) continue;
     const base = entry.name.slice(0, -".md".length);
     const word = "/" + [...segments, base].join(":");
     const info = await readDescription(path);
     out.push({ word, info });
+  }
+}
+
+async function resolveKind(
+  entry: Deno.DirEntry,
+  path: string,
+): Promise<"file" | "directory" | "other"> {
+  if (entry.isFile) return "file";
+  if (entry.isDirectory) return "directory";
+  if (!entry.isSymlink) return "other";
+  try {
+    const stat = await Deno.stat(path);
+    if (stat.isFile) return "file";
+    if (stat.isDirectory) return "directory";
+    return "other";
+  } catch {
+    return "other";
   }
 }
 
