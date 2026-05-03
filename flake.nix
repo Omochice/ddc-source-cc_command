@@ -97,9 +97,25 @@
           ]
           ++ actions;
         };
+        runAs =
+          name: runtimeInputs: text:
+          let
+            program = pkgs.writeShellApplication {
+              inherit name runtimeInputs text;
+            };
+          in
+          {
+            type = "app";
+            program = "${program}/bin/${name}";
+          };
       in
       {
         # keep-sorted start block=yes
+        apps = {
+          test = runAs "test" [ pkgs.deno ] ''
+            deno test --allow-read --allow-write --allow-env=HOME,CLAUDE_CONFIG_DIR --coverage=coverage
+          '';
+        };
         checks = {
           # keep-sorted start
           actions =
