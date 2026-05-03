@@ -35,3 +35,18 @@ Deno.test("collectGlobal reads a command file as a slash item", async () => {
     assertEquals(items, [{ word: "/foo", info: "Do the foo thing" }]);
   });
 });
+
+Deno.test("collectGlobal reads a skill SKILL.md and tags it as (skill)", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const skillDir = join(configDir, "skills", "foo");
+    await Deno.mkdir(skillDir, { recursive: true });
+    await Deno.writeTextFile(
+      join(skillDir, "SKILL.md"),
+      "---\nname: foo\ndescription: Do the foo skill\n---\nbody\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/foo", info: "Do the foo skill (skill)" }]);
+  });
+});
