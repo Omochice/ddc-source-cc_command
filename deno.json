@@ -1,0 +1,19 @@
+{
+  "tasks": {
+    "check": "deno check ./**/*.ts",
+    "lint": "deno lint ./**/*.ts"
+  },
+  "lock": false,
+  "fmt": {
+    "exclude": [
+      "CHANGELOG.md"
+    ]
+  },
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-import-prefix"
+      ]
+    }
+  }
+}
