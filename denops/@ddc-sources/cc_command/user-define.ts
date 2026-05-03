@@ -183,7 +183,7 @@ async function readDescription(path: string): Promise<string> {
     try {
       return extract<Record<string, unknown>>(text).attrs;
     } catch (err) {
-      console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+      console.warn(`Failed to parse frontmatter in "${path}": ${err}`);
       return null;
     }
   })();
