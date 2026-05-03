@@ -1,6 +1,6 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { parse as parseYaml } from "jsr:@std/yaml@1";
-import { join } from "jsr:@std/path@1";
+import { dirname, join, resolve } from "jsr:@std/path@1";
 
 export async function collectGlobal(configDir: string): Promise<Item[]> {
   const items: Item[] = [];
@@ -60,11 +60,31 @@ async function resolveKind(
   }
 }
 
-export function collectLocal(
-  _startDir: string,
-  _homeDir: string,
+export async function collectLocal(
+  startDir: string,
+  homeDir: string,
 ): Promise<Item[]> {
-  throw new Error("not implemented");
+  const home = resolve(homeDir);
+  let current = resolve(startDir);
+  while (true) {
+    if (current === home) return [];
+    const candidate = join(current, ".claude");
+    if (await isDirectory(candidate)) {
+      return await collectGlobal(candidate);
+    }
+    const parent = dirname(current);
+    if (parent === current) return [];
+    current = parent;
+  }
+}
+
+async function isDirectory(path: string): Promise<boolean> {
+  try {
+    const stat = await Deno.stat(path);
+    return stat.isDirectory;
+  } catch {
+    return false;
+  }
 }
 
 async function* safeReadDir(
