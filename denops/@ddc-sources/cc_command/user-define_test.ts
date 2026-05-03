@@ -1,6 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import { join } from "jsr:@std/path@1";
-import { collectGlobal } from "./user-define.ts";
+import { collectGlobal, collectLocal } from "./user-define.ts";
 
 async function withTempConfigDir(
   fn: (configDir: string) => Promise<void>,
@@ -334,4 +334,98 @@ Deno.test("collectGlobal does not treat skill subdirectories as skills", async (
 
     assertEquals(items, [{ word: "/foo", info: "d (skill)" }]);
   });
+});
+
+async function writeCommand(
+  dotClaude: string,
+  name: string,
+  description: string,
+): Promise<void> {
+  const cmds = join(dotClaude, "commands");
+  await Deno.mkdir(cmds, { recursive: true });
+  await Deno.writeTextFile(
+    join(cmds, `${name}.md`),
+    `---\ndescription: ${description}\n---\n`,
+  );
+}
+
+Deno.test("collectLocal returns [] when no ancestor has .claude", async () => {
+  const home = await Deno.makeTempDir();
+  const root = await Deno.makeTempDir();
+  try {
+    const start = join(root, "a", "b", "c");
+    await Deno.mkdir(start, { recursive: true });
+
+    const items = await collectLocal(start, home);
+
+    assertEquals(items, []);
+  } finally {
+    await Deno.remove(home, { recursive: true });
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("collectLocal reads .claude at startDir", async () => {
+  const home = await Deno.makeTempDir();
+  const root = await Deno.makeTempDir();
+  try {
+    await writeCommand(join(root, ".claude"), "foo", "local foo");
+
+    const items = await collectLocal(root, home);
+
+    assertEquals(items, [{ word: "/foo", info: "local foo" }]);
+  } finally {
+    await Deno.remove(home, { recursive: true });
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("collectLocal walks up to find an ancestor .claude", async () => {
+  const home = await Deno.makeTempDir();
+  const root = await Deno.makeTempDir();
+  try {
+    await writeCommand(join(root, ".claude"), "foo", "ancestor foo");
+    const start = join(root, "a", "b");
+    await Deno.mkdir(start, { recursive: true });
+
+    const items = await collectLocal(start, home);
+
+    assertEquals(items, [{ word: "/foo", info: "ancestor foo" }]);
+  } finally {
+    await Deno.remove(home, { recursive: true });
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("collectLocal does not look inside or above homeDir", async () => {
+  const home = await Deno.makeTempDir();
+  const root = join(home, "project", "sub");
+  try {
+    await writeCommand(join(home, ".claude"), "global-only", "g");
+    await Deno.mkdir(root, { recursive: true });
+
+    const items = await collectLocal(root, home);
+
+    assertEquals(items, []);
+  } finally {
+    await Deno.remove(home, { recursive: true });
+  }
+});
+
+Deno.test("collectLocal uses the nearest .claude when multiple ancestors have one", async () => {
+  const home = await Deno.makeTempDir();
+  const root = await Deno.makeTempDir();
+  try {
+    await writeCommand(join(root, ".claude"), "outer", "outer");
+    await writeCommand(join(root, "inner", ".claude"), "inner", "inner");
+    const start = join(root, "inner", "deeper");
+    await Deno.mkdir(start, { recursive: true });
+
+    const items = await collectLocal(start, home);
+
+    assertEquals(items, [{ word: "/inner", info: "inner" }]);
+  } finally {
+    await Deno.remove(home, { recursive: true });
+    await Deno.remove(root, { recursive: true });
+  }
 });
