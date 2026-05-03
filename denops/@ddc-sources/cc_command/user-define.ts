@@ -10,6 +10,7 @@ export async function collectGlobal(configDir: string): Promise<Item[]> {
   const skillsDir = join(configDir, "skills");
   for await (const entry of safeReadDir(skillsDir)) {
     if (!entry.isDirectory) continue;
+    if (entry.name.startsWith(".")) continue;
     const word = "/" + entry.name;
     const description = await readDescription(
       join(skillsDir, entry.name, "SKILL.md"),
@@ -27,6 +28,7 @@ async function collectCommands(
   out: Item[],
 ): Promise<void> {
   for await (const entry of safeReadDir(dir)) {
+    if (entry.name.startsWith(".")) continue;
     const path = join(dir, entry.name);
     if (entry.isDirectory) {
       await collectCommands(path, [...segments, entry.name], out);
