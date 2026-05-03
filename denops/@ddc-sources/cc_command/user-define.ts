@@ -1,25 +1,12 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 
-const CLAUDE_CONFIG_DIR = Deno.env.get("CLAUDE_CONFIG_DIR") ?? "{{home}}";
-
-export async function collectGlobal(): Promise<Item[]> {
-  return await Promise.all([
-    collectGlobalSkills(),
-    collectGlobalCommands(),
-  ]).then((e) => e.flat());
+export function collectGlobal(_configDir: string): Promise<Item[]> {
+  throw new Error("not implemented");
 }
 
-async function collectGlobalSkills(): Promise<Item[]> {}
-
-async function collectGlobalCommands(): Promise<Item[]> {}
-
-export async function collectLocal(): Promise<Item[]> {
-  return await Promise.all([
-    collectLocalSkills(),
-    collectLocalCommands(),
-  ]).then((e) => e.flat());
+export function collectLocal(
+  _startDir: string,
+  _homeDir: string,
+): Promise<Item[]> {
+  throw new Error("not implemented");
 }
-
-async function collectLocalSkills(): Promise<Item[]> {}
-
-async function collectLocalCommands(): Promise<Item[]> {}
