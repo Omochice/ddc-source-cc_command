@@ -9,11 +9,15 @@ export async function collectGlobal(configDir: string): Promise<Item[]> {
 
   const skillsDir = join(configDir, "skills");
   for await (const entry of safeReadDir(skillsDir)) {
-    if (entry.name.startsWith(".")) continue;
+    if (entry.name.startsWith(".")) {
+      continue;
+    }
     const path = join(skillsDir, entry.name);
     const kind = await resolveKind(entry, path);
-    if (kind !== "directory") continue;
-    const word = "/" + entry.name;
+    if (kind !== "directory") {
+      continue;
+    }
+    const word = `/${entry.name}`;
     const description = await readDescription(join(path, "SKILL.md"));
     const info = description === "" ? "" : `${description} (skill)`;
     items.push({ word, info });
@@ -28,7 +32,9 @@ async function collectCommands(
   out: Item[],
 ): Promise<void> {
   for await (const entry of safeReadDir(dir)) {
-    if (entry.name.startsWith(".")) continue;
+    if (entry.name.startsWith(".")) {
+      continue;
+    }
     const path = join(dir, entry.name);
     const kind = await resolveKind(entry, path);
     if (kind === "directory") {
@@ -47,13 +53,23 @@ async function resolveKind(
   entry: Deno.DirEntry,
   path: string,
 ): Promise<"file" | "directory" | "other"> {
-  if (entry.isFile) return "file";
-  if (entry.isDirectory) return "directory";
-  if (!entry.isSymlink) return "other";
+  if (entry.isFile) {
+    return "file";
+  }
+  if (entry.isDirectory) {
+    return "directory";
+  }
+  if (!entry.isSymlink) {
+    return "other";
+  }
   try {
     const stat = await Deno.stat(path);
-    if (stat.isFile) return "file";
-    if (stat.isDirectory) return "directory";
+    if (stat.isFile) {
+      return "file";
+    }
+    if (stat.isDirectory) {
+      return "directory";
+    }
     return "other";
   } catch {
     return "other";
@@ -67,13 +83,17 @@ export async function collectLocal(
   const home = resolve(homeDir);
   let current = resolve(startDir);
   while (true) {
-    if (current === home) return [];
+    if (current === home) {
+      return [];
+    }
     const candidate = join(current, ".claude");
     if (await isDirectory(candidate)) {
       return await collectGlobal(candidate);
     }
     const parent = dirname(current);
-    if (parent === current) return [];
+    if (parent === current) {
+      return [];
+    }
     current = parent;
   }
 }
@@ -95,34 +115,44 @@ async function* safeReadDir(
       yield entry;
     }
   } catch (err) {
-    if (err instanceof Deno.errors.NotFound) return;
+    if (err instanceof Deno.errors.NotFound) {
+      return;
+    }
     throw err;
   }
 }
 
 async function readDescription(path: string): Promise<string> {
-  let text: string;
-  try {
-    text = await Deno.readTextFile(path);
-  } catch {
-    return "";
-  }
+  const text = await (async () => {
+    try {
+      return await Deno.readTextFile(path);
+    } catch {
+      return "";
+    }
+  })();
   const fm = extractFrontmatter(text);
-  if (fm === null) return "";
-  let parsed: Record<string, unknown> | null;
-  try {
-    parsed = parseYaml(fm) as Record<string, unknown> | null;
-  } catch (err) {
-    console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+  if (fm === null) {
     return "";
   }
+  const parsed: Record<string, unknown> | null = (() => {
+    try {
+      return parseYaml(fm) as Record<string, unknown> | null;
+    } catch (err) {
+      console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+      return null
+    }
+  })();
   const description = parsed?.["description"];
   return typeof description === "string" ? description : "";
 }
 
 function extractFrontmatter(text: string): string | null {
-  if (!text.startsWith("---\n")) return null;
+  if (!text.startsWith("---\n")) {
+    return null;
+  }
   const end = text.indexOf("\n---", 4);
-  if (end === -1) return null;
+  if (end === -1) {
+    return null;
+  }
   return text.slice(4, end);
 }
