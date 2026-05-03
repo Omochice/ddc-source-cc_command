@@ -181,6 +181,44 @@ Deno.test("collectGlobal returns both skills and commands together", async () =>
   });
 });
 
+Deno.test("collectGlobal follows valid symlinks to command files", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const cmds = join(configDir, "commands");
+    await Deno.mkdir(cmds, { recursive: true });
+    const target = join(configDir, "elsewhere", "real.md");
+    await Deno.mkdir(join(configDir, "elsewhere"), { recursive: true });
+    await Deno.writeTextFile(
+      target,
+      "---\ndescription: linked\n---\n",
+    );
+    await Deno.symlink(target, join(cmds, "linked.md"));
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/linked", info: "linked" }]);
+  });
+});
+
+Deno.test("collectGlobal follows valid symlinks to skill directories", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const skills = join(configDir, "skills");
+    await Deno.mkdir(skills, { recursive: true });
+    const target = join(configDir, "elsewhere", "actual-skill");
+    await Deno.mkdir(target, { recursive: true });
+    await Deno.writeTextFile(
+      join(target, "SKILL.md"),
+      "---\ndescription: linked skill\n---\n",
+    );
+    await Deno.symlink(target, join(skills, "linked-skill"));
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [
+      { word: "/linked-skill", info: "linked skill (skill)" },
+    ]);
+  });
+});
+
 Deno.test("collectGlobal skips dotfiles and dotdirs", async () => {
   await withTempConfigDir(async (configDir) => {
     const cmds = join(configDir, "commands");
