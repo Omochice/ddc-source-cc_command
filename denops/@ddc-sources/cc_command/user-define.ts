@@ -64,7 +64,13 @@ async function readDescription(path: string): Promise<string> {
   const text = await Deno.readTextFile(path);
   const fm = extractFrontmatter(text);
   if (fm === null) return "";
-  const parsed = parseYaml(fm) as Record<string, unknown> | null;
+  let parsed: Record<string, unknown> | null;
+  try {
+    parsed = parseYaml(fm) as Record<string, unknown> | null;
+  } catch (err) {
+    console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+    return "";
+  }
   const description = parsed?.["description"];
   return typeof description === "string" ? description : "";
 }
