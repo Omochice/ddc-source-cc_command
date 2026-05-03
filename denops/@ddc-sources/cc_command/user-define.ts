@@ -5,13 +5,7 @@ import { join } from "jsr:@std/path@1";
 export async function collectGlobal(configDir: string): Promise<Item[]> {
   const items: Item[] = [];
 
-  const commandsDir = join(configDir, "commands");
-  for await (const entry of safeReadDir(commandsDir)) {
-    if (!entry.isFile || !entry.name.endsWith(".md")) continue;
-    const word = "/" + entry.name.slice(0, -".md".length);
-    const info = await readDescription(join(commandsDir, entry.name));
-    items.push({ word, info });
-  }
+  await collectCommands(join(configDir, "commands"), [], items);
 
   const skillsDir = join(configDir, "skills");
   for await (const entry of safeReadDir(skillsDir)) {
@@ -25,6 +19,25 @@ export async function collectGlobal(configDir: string): Promise<Item[]> {
   }
 
   return items;
+}
+
+async function collectCommands(
+  dir: string,
+  segments: string[],
+  out: Item[],
+): Promise<void> {
+  for await (const entry of safeReadDir(dir)) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory) {
+      await collectCommands(path, [...segments, entry.name], out);
+      continue;
+    }
+    if (!entry.isFile || !entry.name.endsWith(".md")) continue;
+    const base = entry.name.slice(0, -".md".length);
+    const word = "/" + [...segments, base].join(":");
+    const info = await readDescription(path);
+    out.push({ word, info });
+  }
 }
 
 export function collectLocal(
