@@ -181,6 +181,37 @@ Deno.test("collectGlobal returns both skills and commands together", async () =>
   });
 });
 
+Deno.test("collectGlobal skips dotfiles and dotdirs", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const cmds = join(configDir, "commands");
+    await Deno.mkdir(join(cmds, ".hidden"), { recursive: true });
+    await Deno.writeTextFile(
+      join(cmds, ".hidden", "secret.md"),
+      "---\ndescription: x\n---\n",
+    );
+    await Deno.writeTextFile(join(cmds, ".DS_Store"), "noise");
+    await Deno.writeTextFile(
+      join(cmds, ".dotfile.md"),
+      "---\ndescription: x\n---\n",
+    );
+    await Deno.writeTextFile(
+      join(cmds, "visible.md"),
+      "---\ndescription: v\n---\n",
+    );
+
+    const skills = join(configDir, "skills");
+    await Deno.mkdir(join(skills, ".hidden-skill"), { recursive: true });
+    await Deno.writeTextFile(
+      join(skills, ".hidden-skill", "SKILL.md"),
+      "---\ndescription: hidden\n---\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/visible", info: "v" }]);
+  });
+});
+
 Deno.test("collectGlobal warns and yields word-only item for malformed YAML in a command", async () => {
   await withTempConfigDir(async (configDir) => {
     const dir = join(configDir, "commands");
