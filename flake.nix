@@ -113,7 +113,7 @@
         # keep-sorted start block=yes
         apps = {
           test = runAs "test" [ pkgs.deno ] ''
-            deno test --allow-read --allow-write --allow-env=HOME,CLAUDE_CONFIG_DIR --coverage=coverage
+            deno task test --coverage=coverage
           '';
         };
         checks = {
