@@ -56,7 +56,7 @@ async function collectSkills(skillsDir: string): Promise<Item[]> {
   const items = await Promise.all(
     entries.map((entry) => skillEntryItem(skillsDir, entry)),
   );
-  return items.filter((item): item is Item => item !== null);
+  return items.filter((item): item is Item => item != null);
 }
 
 async function skillEntryItem(
@@ -168,7 +168,7 @@ async function readDescription(path: string): Promise<string> {
       return null;
     }
   })();
-  if (attrs === null) {
+  if (attrs == null) {
     return "";
   }
   const description = attrs["description"];
