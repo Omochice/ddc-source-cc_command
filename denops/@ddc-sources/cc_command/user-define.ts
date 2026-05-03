@@ -1,7 +1,7 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
-import { extract } from "jsr:@std/front-matter@1/yaml";
-import { test as hasFrontmatter } from "jsr:@std/front-matter@1/test";
-import { dirname, join, resolve } from "jsr:@std/path@1";
+import { extract } from "jsr:@std/front-matter@1.0.9/yaml";
+import { test as hasFrontmatter } from "jsr:@std/front-matter@1.0.9/test";
+import { dirname, join, resolve } from "jsr:@std/path@1.1.4";
 
 const MAX_COMMAND_DEPTH = 16;
 
