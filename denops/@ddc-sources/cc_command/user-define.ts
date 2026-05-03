@@ -81,7 +81,12 @@ async function* safeReadDir(
 }
 
 async function readDescription(path: string): Promise<string> {
-  const text = await Deno.readTextFile(path);
+  let text: string;
+  try {
+    text = await Deno.readTextFile(path);
+  } catch {
+    return "";
+  }
   const fm = extractFrontmatter(text);
   if (fm === null) return "";
   let parsed: Record<string, unknown> | null;
