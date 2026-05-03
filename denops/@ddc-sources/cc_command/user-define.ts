@@ -3,6 +3,8 @@ import { extract } from "jsr:@std/front-matter@1/yaml";
 import { test as hasFrontmatter } from "jsr:@std/front-matter@1/test";
 import { dirname, join, resolve } from "jsr:@std/path@1";
 
+const MAX_COMMAND_DEPTH = 16;
+
 export async function collectGlobal(configDir: string): Promise<Item[]> {
   const [commands, skills] = await Promise.all([
     collectCommands(join(configDir, "commands"), []),
@@ -14,10 +16,14 @@ export async function collectGlobal(configDir: string): Promise<Item[]> {
 async function collectCommands(
   dir: string,
   segments: string[],
+  depth = 0,
 ): Promise<Item[]> {
+  if (depth > MAX_COMMAND_DEPTH) {
+    return [];
+  }
   const entries = await readDirEntries(dir);
   const groups = await Promise.all(
-    entries.map((entry) => commandEntryItems(dir, entry, segments)),
+    entries.map((entry) => commandEntryItems(dir, entry, segments, depth)),
   );
   return groups.flat();
 }
@@ -26,6 +32,7 @@ async function commandEntryItems(
   dir: string,
   entry: Deno.DirEntry,
   segments: string[],
+  depth: number,
 ): Promise<Item[]> {
   if (entry.name.startsWith(".")) {
     return [];
@@ -33,7 +40,7 @@ async function commandEntryItems(
   const path = join(dir, entry.name);
   const kind = await resolveKind(entry, path);
   if (kind === "directory") {
-    return collectCommands(path, [...segments, entry.name]);
+    return collectCommands(path, [...segments, entry.name], depth + 1);
   }
   if (kind !== "file" || !entry.name.endsWith(".md")) {
     return [];
