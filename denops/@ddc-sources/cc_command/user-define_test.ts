@@ -13,6 +13,21 @@ async function withTempConfigDir(
   }
 }
 
+async function captureWarnings<T>(fn: () => Promise<T>): Promise<{
+  result: T;
+  warnings: unknown[][];
+}> {
+  const warnings: unknown[][] = [];
+  const original = console.warn;
+  console.warn = (...args: unknown[]) => warnings.push(args);
+  try {
+    const result = await fn();
+    return { result, warnings };
+  } finally {
+    console.warn = original;
+  }
+}
+
 Deno.test("collectGlobal returns [] when configDir does not exist", async () => {
   await withTempConfigDir(async (tmp) => {
     const missing = join(tmp, "does-not-exist");
@@ -163,6 +178,26 @@ Deno.test("collectGlobal returns both skills and commands together", async () =>
       { word: "/bar", info: "s (skill)" },
       { word: "/foo", info: "c" },
     ]);
+  });
+});
+
+Deno.test("collectGlobal warns and yields word-only item for malformed YAML in a command", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const dir = join(configDir, "commands");
+    await Deno.mkdir(dir, { recursive: true });
+    await Deno.writeTextFile(
+      join(dir, "foo.md"),
+      "---\ndescription: : : :\n  not: valid\n---\n",
+    );
+
+    const { result, warnings } = await captureWarnings(() =>
+      collectGlobal(configDir)
+    );
+
+    assertEquals(result, [{ word: "/foo", info: "" }]);
+    if (warnings.length === 0) {
+      throw new Error("expected at least one console.warn call");
+    }
   });
 });
 
