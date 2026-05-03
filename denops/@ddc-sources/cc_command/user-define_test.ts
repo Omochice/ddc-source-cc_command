@@ -50,3 +50,20 @@ Deno.test("collectGlobal reads a skill SKILL.md and tags it as (skill)", async (
     assertEquals(items, [{ word: "/foo", info: "Do the foo skill (skill)" }]);
   });
 });
+
+Deno.test("collectGlobal joins nested command paths with colons", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const nested = join(configDir, "commands", "team");
+    await Deno.mkdir(nested, { recursive: true });
+    await Deno.writeTextFile(
+      join(nested, "deploy.md"),
+      "---\ndescription: Deploy the team service\n---\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [
+      { word: "/team:deploy", info: "Deploy the team service" },
+    ]);
+  });
+});
