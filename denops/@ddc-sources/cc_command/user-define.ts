@@ -3,14 +3,27 @@ import { parse as parseYaml } from "jsr:@std/yaml@1";
 import { join } from "jsr:@std/path@1";
 
 export async function collectGlobal(configDir: string): Promise<Item[]> {
-  const commandsDir = join(configDir, "commands");
   const items: Item[] = [];
+
+  const commandsDir = join(configDir, "commands");
   for await (const entry of safeReadDir(commandsDir)) {
     if (!entry.isFile || !entry.name.endsWith(".md")) continue;
     const word = "/" + entry.name.slice(0, -".md".length);
     const info = await readDescription(join(commandsDir, entry.name));
     items.push({ word, info });
   }
+
+  const skillsDir = join(configDir, "skills");
+  for await (const entry of safeReadDir(skillsDir)) {
+    if (!entry.isDirectory) continue;
+    const word = "/" + entry.name;
+    const description = await readDescription(
+      join(skillsDir, entry.name, "SKILL.md"),
+    );
+    const info = description === "" ? "" : `${description} (skill)`;
+    items.push({ word, info });
+  }
+
   return items;
 }
 
