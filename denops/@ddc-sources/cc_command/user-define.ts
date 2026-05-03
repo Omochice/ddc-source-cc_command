@@ -1,5 +1,6 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
-import { parse as parseYaml } from "jsr:@std/yaml@1";
+import { extract } from "jsr:@std/front-matter@1/yaml";
+import { test as hasFrontmatter } from "jsr:@std/front-matter@1/test";
 import { dirname, join, resolve } from "jsr:@std/path@1";
 
 export async function collectGlobal(configDir: string): Promise<Item[]> {
@@ -123,36 +124,22 @@ async function* safeReadDir(
 }
 
 async function readDescription(path: string): Promise<string> {
-  const text = await (async () => {
-    try {
-      return await Deno.readTextFile(path);
-    } catch {
-      return "";
-    }
-  })();
-  const fm = extractFrontmatter(text);
-  if (fm === null) {
+  let text: string;
+  try {
+    text = await Deno.readTextFile(path);
+  } catch {
     return "";
   }
-  const parsed: Record<string, unknown> | null = (() => {
-    try {
-      return parseYaml(fm) as Record<string, unknown> | null;
-    } catch (err) {
-      console.warn(`failed to parse frontmatter in ${path}: ${err}`);
-      return null
-    }
-  })();
-  const description = parsed?.["description"];
+  if (!hasFrontmatter(text, ["yaml"])) {
+    return "";
+  }
+  let attrs: Record<string, unknown>;
+  try {
+    attrs = extract<Record<string, unknown>>(text).attrs;
+  } catch (err) {
+    console.warn(`failed to parse frontmatter in ${path}: ${err}`);
+    return "";
+  }
+  const description = attrs["description"];
   return typeof description === "string" ? description : "";
-}
-
-function extractFrontmatter(text: string): string | null {
-  if (!text.startsWith("---\n")) {
-    return null;
-  }
-  const end = text.indexOf("\n---", 4);
-  if (end === -1) {
-    return null;
-  }
-  return text.slice(4, end);
 }
