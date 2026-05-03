@@ -219,6 +219,53 @@ Deno.test("collectGlobal follows valid symlinks to skill directories", async () 
   });
 });
 
+Deno.test("collectGlobal skips broken symlinks without throwing", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const cmds = join(configDir, "commands");
+    await Deno.mkdir(cmds, { recursive: true });
+    await Deno.symlink(
+      join(configDir, "missing-target.md"),
+      join(cmds, "broken.md"),
+    );
+    await Deno.writeTextFile(
+      join(cmds, "ok.md"),
+      "---\ndescription: ok\n---\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/ok", info: "ok" }]);
+  });
+});
+
+Deno.test("collectGlobal keeps going when a single file is unreadable", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const cmds = join(configDir, "commands");
+    await Deno.mkdir(cmds, { recursive: true });
+    const blocked = join(cmds, "blocked.md");
+    await Deno.writeTextFile(
+      blocked,
+      "---\ndescription: secret\n---\n",
+    );
+    await Deno.chmod(blocked, 0o000);
+    await Deno.writeTextFile(
+      join(cmds, "ok.md"),
+      "---\ndescription: ok\n---\n",
+    );
+
+    try {
+      const { result } = await captureWarnings(() => collectGlobal(configDir));
+      const sorted = [...result].sort((a, b) => a.word.localeCompare(b.word));
+      assertEquals(sorted, [
+        { word: "/blocked", info: "" },
+        { word: "/ok", info: "ok" },
+      ]);
+    } finally {
+      await Deno.chmod(blocked, 0o644);
+    }
+  });
+});
+
 Deno.test("collectGlobal skips dotfiles and dotdirs", async () => {
   await withTempConfigDir(async (configDir) => {
     const cmds = join(configDir, "commands");
