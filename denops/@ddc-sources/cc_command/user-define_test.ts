@@ -67,3 +67,120 @@ Deno.test("collectGlobal joins nested command paths with colons", async () => {
     ]);
   });
 });
+
+Deno.test("collectGlobal joins multi-level nested commands", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const nested = join(configDir, "commands", "a", "b");
+    await Deno.mkdir(nested, { recursive: true });
+    await Deno.writeTextFile(
+      join(nested, "c.md"),
+      "---\ndescription: deep\n---\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/a:b:c", info: "deep" }]);
+  });
+});
+
+Deno.test("collectGlobal returns [] when configDir has no skills/ or commands/", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const items = await collectGlobal(configDir);
+    assertEquals(items, []);
+  });
+});
+
+Deno.test("collectGlobal uses skill directory name, not frontmatter name", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const skillDir = join(configDir, "skills", "actual-dir");
+    await Deno.mkdir(skillDir, { recursive: true });
+    await Deno.writeTextFile(
+      join(skillDir, "SKILL.md"),
+      "---\nname: misleading-name\ndescription: d\n---\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/actual-dir", info: "d (skill)" }]);
+  });
+});
+
+Deno.test("collectGlobal yields word-only item when command has no frontmatter", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const dir = join(configDir, "commands");
+    await Deno.mkdir(dir, { recursive: true });
+    await Deno.writeTextFile(join(dir, "foo.md"), "just a body, no frontmatter");
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/foo", info: "" }]);
+  });
+});
+
+Deno.test("collectGlobal yields word-only item when skill has no frontmatter", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const dir = join(configDir, "skills", "foo");
+    await Deno.mkdir(dir, { recursive: true });
+    await Deno.writeTextFile(join(dir, "SKILL.md"), "just a body, no frontmatter");
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/foo", info: "" }]);
+  });
+});
+
+Deno.test("collectGlobal yields empty info when frontmatter has no description", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const dir = join(configDir, "commands");
+    await Deno.mkdir(dir, { recursive: true });
+    await Deno.writeTextFile(join(dir, "foo.md"), "---\nname: foo\n---\n");
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/foo", info: "" }]);
+  });
+});
+
+Deno.test("collectGlobal returns both skills and commands together", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const cmds = join(configDir, "commands");
+    const sk = join(configDir, "skills", "bar");
+    await Deno.mkdir(cmds, { recursive: true });
+    await Deno.mkdir(sk, { recursive: true });
+    await Deno.writeTextFile(
+      join(cmds, "foo.md"),
+      "---\ndescription: c\n---\n",
+    );
+    await Deno.writeTextFile(
+      join(sk, "SKILL.md"),
+      "---\ndescription: s\n---\n",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    const sorted = [...items].sort((a, b) => a.word.localeCompare(b.word));
+    assertEquals(sorted, [
+      { word: "/bar", info: "s (skill)" },
+      { word: "/foo", info: "c" },
+    ]);
+  });
+});
+
+Deno.test("collectGlobal does not treat skill subdirectories as skills", async () => {
+  await withTempConfigDir(async (configDir) => {
+    const skillDir = join(configDir, "skills", "foo");
+    await Deno.mkdir(join(skillDir, "references"), { recursive: true });
+    await Deno.writeTextFile(
+      join(skillDir, "SKILL.md"),
+      "---\ndescription: d\n---\n",
+    );
+    await Deno.writeTextFile(
+      join(skillDir, "references", "notes.md"),
+      "internal notes",
+    );
+
+    const items = await collectGlobal(configDir);
+
+    assertEquals(items, [{ word: "/foo", info: "d (skill)" }]);
+  });
+});
