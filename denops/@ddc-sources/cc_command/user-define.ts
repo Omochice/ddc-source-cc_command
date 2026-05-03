@@ -4,50 +4,69 @@ import { test as hasFrontmatter } from "jsr:@std/front-matter@1/test";
 import { dirname, join, resolve } from "jsr:@std/path@1";
 
 export async function collectGlobal(configDir: string): Promise<Item[]> {
-  const items: Item[] = [];
-
-  await collectCommands(join(configDir, "commands"), [], items);
-
-  const skillsDir = join(configDir, "skills");
-  for await (const entry of safeReadDir(skillsDir)) {
-    if (entry.name.startsWith(".")) {
-      continue;
-    }
-    const path = join(skillsDir, entry.name);
-    const kind = await resolveKind(entry, path);
-    if (kind !== "directory") {
-      continue;
-    }
-    const word = `/${entry.name}`;
-    const description = await readDescription(join(path, "SKILL.md"));
-    const info = description === "" ? "" : `${description} (skill)`;
-    items.push({ word, info });
-  }
-
-  return items;
+  const [commands, skills] = await Promise.all([
+    collectCommands(join(configDir, "commands"), []),
+    collectSkills(join(configDir, "skills")),
+  ]);
+  return [...commands, ...skills];
 }
 
 async function collectCommands(
   dir: string,
   segments: string[],
-  out: Item[],
-): Promise<void> {
-  for await (const entry of safeReadDir(dir)) {
-    if (entry.name.startsWith(".")) {
-      continue;
-    }
-    const path = join(dir, entry.name);
-    const kind = await resolveKind(entry, path);
-    if (kind === "directory") {
-      await collectCommands(path, [...segments, entry.name], out);
-      continue;
-    }
-    if (kind !== "file" || !entry.name.endsWith(".md")) continue;
-    const base = entry.name.slice(0, -".md".length);
-    const word = "/" + [...segments, base].join(":");
-    const info = await readDescription(path);
-    out.push({ word, info });
+): Promise<Item[]> {
+  const entries = await readDirEntries(dir);
+  const groups = await Promise.all(
+    entries.map((entry) => commandEntryItems(dir, entry, segments)),
+  );
+  return groups.flat();
+}
+
+async function commandEntryItems(
+  dir: string,
+  entry: Deno.DirEntry,
+  segments: string[],
+): Promise<Item[]> {
+  if (entry.name.startsWith(".")) {
+    return [];
   }
+  const path = join(dir, entry.name);
+  const kind = await resolveKind(entry, path);
+  if (kind === "directory") {
+    return collectCommands(path, [...segments, entry.name]);
+  }
+  if (kind !== "file" || !entry.name.endsWith(".md")) {
+    return [];
+  }
+  const base = entry.name.slice(0, -".md".length);
+  const word = `/${[...segments, base].join(":")}`;
+  const info = await readDescription(path);
+  return [{ word, info }];
+}
+
+async function collectSkills(skillsDir: string): Promise<Item[]> {
+  const entries = await readDirEntries(skillsDir);
+  const items = await Promise.all(
+    entries.map((entry) => skillEntryItem(skillsDir, entry)),
+  );
+  return items.filter((item): item is Item => item !== null);
+}
+
+async function skillEntryItem(
+  skillsDir: string,
+  entry: Deno.DirEntry,
+): Promise<Item | null> {
+  if (entry.name.startsWith(".")) {
+    return null;
+  }
+  const path = join(skillsDir, entry.name);
+  const kind = await resolveKind(entry, path);
+  if (kind !== "directory") {
+    return null;
+  }
+  const description = await readDescription(join(path, "SKILL.md"));
+  const info = description === "" ? "" : `${description} (skill)`;
+  return { word: `/${entry.name}`, info };
 }
 
 async function resolveKind(
@@ -108,16 +127,16 @@ async function isDirectory(path: string): Promise<boolean> {
   }
 }
 
-async function* safeReadDir(
-  dir: string,
-): AsyncGenerator<Deno.DirEntry, void, void> {
+async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
   try {
+    const entries: Deno.DirEntry[] = [];
     for await (const entry of Deno.readDir(dir)) {
-      yield entry;
+      entries.push(entry);
     }
+    return entries;
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
-      return;
+      return [];
     }
     throw err;
   }
