@@ -40,6 +40,7 @@ jobs:
             deno:
               - ./**/*.ts
               - deno.json
+              - octocov.yaml
   check-format:
     needs: path-filter
     timeout-minutes: 10
@@ -89,6 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: write
+      contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -97,9 +100,12 @@ jobs:
       - uses: ./.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix run .#test
+      - name: Run tests with coverage
+        run: nix run .#test
       - uses: k1LoW/octocov-action@b3b6ee60482a667950f87553abf1df63217235d9 # v1.5.1
         if: always()
+        with:
+          config: octocov.yaml
   check-renovate-config:
     needs: path-filter
     if: needs.path-filter.outputs.renovate == 'true' || needs.path-filter.outputs.flake == 'true'

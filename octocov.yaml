@@ -1,0 +1,26 @@
+coverage:
+  paths:
+    - coverage/lcov.info
+
+testExecutionTime:
+  steps:
+    - Run tests with coverage
+
+codeToTestRatio:
+  code:
+    - "denops/**/*.ts"
+    - "!denops/**/*.test.ts"
+  test:
+    - "denops/**/*.test.ts"
+
+comment:
+  hideFooterLink: false
+
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
