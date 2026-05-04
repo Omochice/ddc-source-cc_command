@@ -62,7 +62,7 @@ describe("parseDescription", () => {
         "---",
         "",
       ].join("\n");
-      expect(parseDescription(text)).toBe("foo\nbar");
+      expect(parseDescription(text)).toBe("foo\nbar\n");
     });
 
     it("recovers a folded block description (`>`) past an invalid field", () => {
@@ -75,7 +75,7 @@ describe("parseDescription", () => {
         "---",
         "",
       ].join("\n");
-      expect(parseDescription(text)).toBe("foo bar");
+      expect(parseDescription(text)).toBe("foo bar\n");
     });
 
     it("strips surrounding double quotes", () => {

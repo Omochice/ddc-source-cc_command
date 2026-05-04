@@ -79,5 +79,8 @@ function readBlockScalar(
   while (collected.length > 0 && collected[collected.length - 1] === "") {
     collected.pop();
   }
-  return collected.join(literal ? "\n" : " ");
+  if (collected.length === 0) {
+    return "";
+  }
+  return collected.join(literal ? "\n" : " ") + "\n";
 }
