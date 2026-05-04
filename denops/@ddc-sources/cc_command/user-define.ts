@@ -160,11 +160,8 @@ async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
       entries.push(entry);
     }
     return entries;
-  } catch (err) {
-    if (err instanceof Deno.errors.NotFound) {
-      return [];
-    }
-    throw err;
+  } catch {
+    return [];
   }
 }
 

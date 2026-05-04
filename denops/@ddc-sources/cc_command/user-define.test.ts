@@ -298,6 +298,30 @@ describe("collectGlobal", () => {
       });
     });
 
+    it("keeps going when a subdirectory is unreadable", async () => {
+      await withTempConfigDir(async (configDir) => {
+        const cmds = join(configDir, "commands");
+        const blocked = join(cmds, "blocked");
+        await Deno.mkdir(blocked, { recursive: true });
+        await Deno.writeTextFile(
+          join(blocked, "secret.md"),
+          "---\ndescription: secret\n---\n",
+        );
+        await Deno.chmod(blocked, 0o000);
+        await Deno.writeTextFile(
+          join(cmds, "ok.md"),
+          "---\ndescription: ok\n---\n",
+        );
+
+        try {
+          const items = await collectGlobal(configDir);
+          expect(items).toEqual([{ word: "/ok", info: "ok" }]);
+        } finally {
+          await Deno.chmod(blocked, 0o755);
+        }
+      });
+    });
+
     it("keeps going when a single file is unreadable", async () => {
       await withTempConfigDir(async (configDir) => {
         const cmds = join(configDir, "commands");
