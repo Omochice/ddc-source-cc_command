@@ -56,7 +56,7 @@ async function commandEntryItems(
   }
   const base = entry.name.slice(0, -".md".length);
   const word = `/${[...segments, base].join(":")}`;
-  const info = parseDescription(path);
+  const info = parseDescription(Deno.readTextFileSync(path));
   return info === "" ? [{ word }] : [{ word, info }];
 }
 
@@ -84,7 +84,7 @@ async function skillEntryItem(
   if (!(await isFile(skillFile))) {
     return null;
   }
-  const description = await readDescription(skillFile);
+  const description = parseDescription(Deno.readTextFileSync(skillFile));
   const info = description === "" ? "" : `${description} (skill)`;
   return { word: `/${entry.name}`, info };
 }
