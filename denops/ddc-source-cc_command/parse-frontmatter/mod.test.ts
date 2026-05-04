@@ -98,6 +98,46 @@ describe("parseDescription", () => {
       expect(parseDescription(text)).toBe("quoted value");
     });
 
+    it("returns empty when fallback value is a YAML boolean", () => {
+      const text = [
+        "---",
+        "description: true",
+        "argument-hint: [a] [b]",
+        "---",
+      ].join("\n");
+      expect(parseDescription(text)).toBe("");
+    });
+
+    it("returns empty when fallback value is a YAML integer", () => {
+      const text = [
+        "---",
+        "description: 123",
+        "argument-hint: [a] [b]",
+        "---",
+      ].join("\n");
+      expect(parseDescription(text)).toBe("");
+    });
+
+    it("returns empty when fallback value is YAML null", () => {
+      const text = [
+        "---",
+        "description: null",
+        "argument-hint: [a] [b]",
+        "---",
+      ].join("\n");
+      expect(parseDescription(text)).toBe("");
+    });
+
+    it("returns empty when fallback value is empty (YAML null)", () => {
+      const text = [
+        "---",
+        "description:",
+        "argument-hint: [a] [b]",
+        "---",
+      ].join("\n");
+      expect(parseDescription(text)).toBe("");
+    });
+
     it("returns empty when fallback finds no description line", () => {
       const text = [
         "---",

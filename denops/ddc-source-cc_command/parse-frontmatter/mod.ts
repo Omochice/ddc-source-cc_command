@@ -49,10 +49,18 @@ function descriptionFromRawFrontmatter(text: string): string {
     ) {
       return value.slice(1, -1);
     }
-    return value;
+    return YAML_NON_STRING_SCALAR.test(value) ? "" : value;
   }
   return "";
 }
+
+// Plain-scalar values whose YAML core-schema type is not a string.
+// `@std/front-matter` resolves these to non-string and `parseDescription`
+// then returns "" via the typeof guard; the fallback must follow the same
+// contract so a malformed sibling field cannot turn `description: true`
+// into the literal string "true".
+const YAML_NON_STRING_SCALAR =
+  /^(|null|Null|NULL|~|true|True|TRUE|false|False|FALSE|[-+]?\d+|[-+]?\d*\.\d+|[-+]?\d+\.\d*|[-+]?\d+(\.\d*)?[eE][-+]?\d+)$/;
 
 function readBlockScalar(
   lines: string[],
