@@ -98,7 +98,7 @@
           ++ actions;
         };
         runAs =
-          name: runtimeInputs: text:
+          name: description: runtimeInputs: text:
           let
             program = pkgs.writeShellApplication {
               inherit name runtimeInputs text;
@@ -107,12 +107,17 @@
           {
             type = "app";
             program = "${program}/bin/${name}";
+            meta = { inherit description; };
           };
       in
       {
         # keep-sorted start block=yes
         apps = {
-          test = runAs "test" [ pkgs.deno ] ''
+          check-deno = runAs "check-deno" "Run deno check and lint" [ pkgs.deno ] ''
+            deno task check
+            deno task lint
+          '';
+          test = runAs "test" "Run deno tests with coverage" [ pkgs.deno ] ''
             deno task test --coverage=coverage
           '';
         };
