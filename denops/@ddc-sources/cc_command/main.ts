@@ -13,7 +13,7 @@ import { builtins } from "./builtin.ts";
 import { findSlashCommandStart } from "./complete-position.ts";
 import { collectGlobal, collectLocal } from "./user-define.ts";
 
-type Params = Record<string, unknown>;
+type Params = Record<string, never>;
 
 /**
  * ddc.vim source that provides Claude Code slash command completion.
