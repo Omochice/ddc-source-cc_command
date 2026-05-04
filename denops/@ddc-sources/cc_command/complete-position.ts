@@ -21,7 +21,7 @@ const re = /(?:^|\s)(?<command>\/\S*)$/d;
  */
 export function findSlashCommandStart(input: string): number {
   const command = input.match(re)?.indices?.groups?.command;
-  if (command === undefined) {
+  if (command == null) {
     return -1;
   }
   return command[0];
