@@ -1,4 +1,5 @@
 import type {
+  Context,
   DdcOptions,
   Item,
   SourceOptions,
@@ -9,6 +10,7 @@ import { getcwd } from "jsr:@denops/std@8.2.0/function";
 import { join } from "jsr:@std/path@1.1.4/join";
 
 import { builtins } from "./builtin.ts";
+import { findSlashCommandStart } from "./complete-position.ts";
 import { collectGlobal, collectLocal } from "./user-define.ts";
 
 type Params = Record<string, unknown>;
@@ -29,6 +31,18 @@ export class Source extends BaseSource<Params> {
     this.#home = Deno.env.get("HOME") ?? "";
     this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ||
       (this.#home ? join(this.#home, ".claude") : "");
+  }
+
+  /**
+   * Returns the column at which the candidate text should replace existing
+   * input. The default implementation in ddc.vim relies on
+   * `keywordPattern`, which excludes `/`; overriding here ensures the
+   * leading slash of a slash command is part of the replacement range.
+   */
+  override getCompletePosition(
+    { context }: { context: Context },
+  ): Promise<number> {
+    return Promise.resolve(findSlashCommandStart(context.input));
   }
 
   /**
