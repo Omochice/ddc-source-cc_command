@@ -28,7 +28,7 @@ export class Source extends BaseSource<Params> {
     super();
     this.#home = Deno.env.get("HOME") ?? "";
     this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ||
-      join(this.#home, ".claude");
+      (this.#home ? join(this.#home, ".claude") : "");
   }
 
   /**
@@ -43,11 +43,15 @@ export class Source extends BaseSource<Params> {
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
-    const [global, local] = await Promise.all([
-      collectGlobal(this.#configDir),
-      collectLocal(await getcwd(args.denops), this.#home),
-    ]);
-    return [...builtins, ...global, ...local];
+    const tasks: Promise<Item[]>[] = [];
+    if (this.#configDir) {
+      tasks.push(collectGlobal(this.#configDir));
+    }
+    if (this.#home) {
+      tasks.push(collectLocal(await getcwd(args.denops), this.#home));
+    }
+    const results = await Promise.all(tasks);
+    return [...builtins, ...results.flat()];
   }
 
   override params(): Params {
