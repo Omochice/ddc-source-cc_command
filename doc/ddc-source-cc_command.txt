@@ -16,7 +16,7 @@ This source collects claude-code skills and commands.
 ==============================================================================
 DEPENDENCIES				*ddc-source-cc_command-dependencies*
 
-This source depends:
+This source depends on:
 
 - https://github.com/vim-denops/denops.vim
 - https://github.com/Shougo/ddc.vim
