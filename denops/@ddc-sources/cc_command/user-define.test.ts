@@ -209,6 +209,30 @@ describe("collectGlobal", () => {
       });
     });
 
+    it("ignores skill directories without SKILL.md", async () => {
+      await withTempConfigDir(async (configDir) => {
+        const empty = join(configDir, "skills", "templates");
+        await Deno.mkdir(empty, { recursive: true });
+        await Deno.writeTextFile(
+          join(empty, "notes.md"),
+          "helper file, not a skill",
+        );
+
+        const real = join(configDir, "skills", "real");
+        await Deno.mkdir(real, { recursive: true });
+        await Deno.writeTextFile(
+          join(real, "SKILL.md"),
+          "---\ndescription: real skill\n---\n",
+        );
+
+        const items = await collectGlobal(configDir);
+
+        expect(items).toEqual([
+          { word: "/real", info: "real skill (skill)" },
+        ]);
+      });
+    });
+
     it("does not treat skill subdirectories as separate skills", async () => {
       await withTempConfigDir(async (configDir) => {
         const skillDir = join(configDir, "skills", "foo");

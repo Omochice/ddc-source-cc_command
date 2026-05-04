@@ -80,7 +80,11 @@ async function skillEntryItem(
   if (kind !== "directory") {
     return null;
   }
-  const description = await readDescription(join(path, "SKILL.md"));
+  const skillFile = join(path, "SKILL.md");
+  if (!(await isFile(skillFile))) {
+    return null;
+  }
+  const description = await readDescription(skillFile);
   const info = description === "" ? "" : `${description} (skill)`;
   return { word: `/${entry.name}`, info };
 }
@@ -148,6 +152,15 @@ async function isDirectory(path: string): Promise<boolean> {
   try {
     const stat = await Deno.stat(path);
     return stat.isDirectory;
+  } catch {
+    return false;
+  }
+}
+
+async function isFile(path: string): Promise<boolean> {
+  try {
+    const stat = await Deno.stat(path);
+    return stat.isFile;
   } catch {
     return false;
   }
