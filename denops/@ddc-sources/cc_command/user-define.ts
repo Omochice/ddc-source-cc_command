@@ -56,7 +56,11 @@ async function commandEntryItems(
   }
   const base = entry.name.slice(0, -".md".length);
   const word = `/${[...segments, base].join(":")}`;
-  const info = parseDescription(Deno.readTextFileSync(path));
+  const text = readTextFileSafe(path);
+  if (text == null) {
+    return [{ word }];
+  }
+  const info = parseDescription(text);
   return info === "" ? [{ word }] : [{ word, info }];
 }
 
@@ -84,9 +88,16 @@ async function skillEntryItem(
   if (!(await isFile(skillFile))) {
     return null;
   }
-  const description = parseDescription(Deno.readTextFileSync(skillFile));
-  const info = description === "" ? "" : `${description} (skill)`;
-  return { word: `/${entry.name}`, info };
+  const word = `/${entry.name}`;
+  const text = readTextFileSafe(skillFile);
+  if (text == null) {
+    return { word };
+  }
+  const description = parseDescription(text);
+  if (description === "") {
+    return { word };
+  }
+  return { word, info: description };
 }
 
 async function resolveKind(
@@ -175,5 +186,14 @@ async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
     return entries;
   } catch {
     return [];
+  }
+}
+
+function readTextFileSafe(path: string): string | null {
+  try {
+    return Deno.readTextFileSync(path);
+  } catch (err) {
+    console.warn(`Failed to read "${path}": ${err}`);
+    return null;
   }
 }
