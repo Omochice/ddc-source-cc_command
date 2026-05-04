@@ -9,7 +9,7 @@ Configurations	|ddc-source-cc_command-configurations|
 Params		|ddc-source-cc_command-params|
 
 ==============================================================================
-introduction				*ddc-source-cc_command-introduction*
+INTRODUCTION				*ddc-source-cc_command-introduction*
 
 This source collects claude-code skills and commands.
 
@@ -38,7 +38,7 @@ CONFIGURATIONS				*ddc-source-cc_command-configurations*
 <
 
 ==============================================================================
-Params					*ddc-source-cc_command-params*
+PARAMS					*ddc-source-cc_command-params*
 
 Currently, this source has no params.
 
