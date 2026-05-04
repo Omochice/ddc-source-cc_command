@@ -254,21 +254,27 @@ describe("collectGlobal", () => {
   });
 
   describe("error handling", () => {
-    it("warns and yields word-only item for malformed YAML in a command", async () => {
+    it("recovers description via fallback when std YAML parser fails", async () => {
       await withTempConfigDir(async (configDir) => {
         const dir = join(configDir, "commands");
         await Deno.mkdir(dir, { recursive: true });
         await Deno.writeTextFile(
           join(dir, "foo.md"),
-          "---\ndescription: : : :\n  not: valid\n---\n",
+          [
+            "---",
+            "description: Validate implementation",
+            "allowed-tools: Bash, Glob, Grep, Read, LS",
+            "argument-hint: [feature-name] [task-numbers]",
+            "---",
+            "",
+          ].join("\n"),
         );
 
-        const { result, warnings } = await captureWarnings(() =>
-          collectGlobal(configDir)
-        );
+        const items = await collectGlobal(configDir);
 
-        expect(result).toEqual([{ word: "/foo", info: "" }]);
-        expect(warnings.length).toBeGreaterThan(0);
+        expect(items).toEqual([
+          { word: "/foo", info: "Validate implementation" },
+        ]);
       });
     });
 

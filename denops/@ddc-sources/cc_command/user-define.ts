@@ -1,7 +1,7 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
-import { extract } from "jsr:@std/front-matter@1.0.9/yaml";
-import { test as hasFrontmatter } from "jsr:@std/front-matter@1.0.9/test";
 import { dirname, join, resolve } from "jsr:@std/path@1.1.4";
+
+import { parseDescription } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
 
 const MAX_COMMAND_DEPTH = 16;
 
@@ -56,8 +56,8 @@ async function commandEntryItems(
   }
   const base = entry.name.slice(0, -".md".length);
   const word = `/${[...segments, base].join(":")}`;
-  const info = await readDescription(path);
-  return [{ word, info }];
+  const info = parseDescription(path);
+  return info === "" ? [{ word }] : [{ word, info }];
 }
 
 async function collectSkills(skillsDir: string): Promise<Item[]> {
@@ -176,30 +176,4 @@ async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
   } catch {
     return [];
   }
-}
-
-async function readDescription(path: string): Promise<string> {
-  const text = await (async () => {
-    try {
-      return await Deno.readTextFile(path);
-    } catch {
-      return "";
-    }
-  })();
-  if (!hasFrontmatter(text, ["yaml"])) {
-    return "";
-  }
-  const attrs = (() => {
-    try {
-      return extract<Record<string, unknown>>(text).attrs;
-    } catch (err) {
-      console.warn(`Failed to parse frontmatter in "${path}": ${err}`);
-      return null;
-    }
-  })();
-  if (attrs == null) {
-    return "";
-  }
-  const description = attrs["description"];
-  return typeof description === "string" ? description : "";
 }
