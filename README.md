@@ -10,6 +10,8 @@ A ddc.vim source for using claude-code skills and commands.
 ## Usage
 
 ```vim
+call ddc#custom#patch_global('sources', ['cc_command'])
+
 call ddc#custom#patch_global('sourceOptions', #{
       \   cc_command: #{
       \     mark: 'C.C',
