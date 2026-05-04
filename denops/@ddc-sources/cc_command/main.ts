@@ -5,20 +5,53 @@ import type {
 } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { BaseSource } from "jsr:@shougo/ddc-vim@10.3.0/source";
 import type { Denops } from "jsr:@denops/std@8.2.0";
+import { getcwd } from "jsr:@denops/std@8.2.0/function";
+import { join } from "jsr:@std/path@1.1.4/join";
 
 import { builtins } from "./builtin.ts";
+import { collectGlobal, collectLocal } from "./user-define.ts";
 
 type Params = Record<string, unknown>;
 
+/**
+ * ddc.vim source that provides Claude Code slash command completion.
+ *
+ * Gathers built-in commands together with user-defined commands and skills
+ * found under the global Claude config directory and the nearest project-local
+ * `.claude` directory.
+ */
 export class Source extends BaseSource<Params> {
-  override gather(_: {
+  #home: string;
+  #configDir: string;
+
+  constructor() {
+    super();
+    this.#home = Deno.env.get("HOME") ?? "";
+    this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ||
+      (this.#home ? join(this.#home, ".claude") : "");
+  }
+
+  /**
+   * Returns the full set of completion candidates for the current buffer.
+   *
+   * @param args ddc gather arguments supplied by the host.
+   */
+  override async gather(args: {
     denops: Denops;
     options: DdcOptions;
     sourceOptions: SourceOptions;
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
-    return Promise.resolve(builtins);
+    const tasks: Promise<Item[]>[] = [];
+    if (this.#configDir) {
+      tasks.push(collectGlobal(this.#configDir));
+    }
+    if (this.#home) {
+      tasks.push(collectLocal(await getcwd(args.denops), this.#home));
+    }
+    const results = await Promise.all(tasks);
+    return [...builtins, ...results.flat()];
   }
 
   override params(): Params {
