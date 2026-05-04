@@ -35,6 +35,8 @@ jobs:
             actions:
               - .github/workflows/*.yml
               - .github/workflows/*.yaml
+              - .github/actions/**/*.yml
+              - .github/actions/**/*.yaml
             deno:
               - ./**/*.ts
   check-format:
