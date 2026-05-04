@@ -39,6 +39,7 @@ jobs:
               - .github/actions/**/*.yaml
             deno:
               - ./**/*.ts
+              - deno.json
   check-format:
     needs: path-filter
     timeout-minutes: 10
