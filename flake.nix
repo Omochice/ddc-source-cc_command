@@ -118,6 +118,7 @@
             deno task lint
           '';
           test = runAs "test" "Run deno tests with coverage" [ pkgs.deno ] ''
+            rm -rf coverage
             deno task test --coverage=coverage
             deno coverage --lcov --output=coverage/lcov.info coverage
           '';
