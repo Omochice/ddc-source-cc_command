@@ -40,6 +40,7 @@ jobs:
             deno:
               - ./**/*.ts
               - deno.json
+              - octocov.yaml
   check-format:
     needs: path-filter
     timeout-minutes: 10
