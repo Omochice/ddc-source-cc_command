@@ -34,10 +34,9 @@ export class Source extends BaseSource<Params> {
   }
 
   /**
-   * Returns the column at which the candidate text should replace existing
-   * input. The default implementation in ddc.vim relies on
-   * `keywordPattern`, which excludes `/`; overriding here ensures the
-   * leading slash of a slash command is part of the replacement range.
+   * The default `getCompletePosition` derives the replacement range from
+   * `keywordPattern`, which excludes `/`. Override here so the leading
+   * slash of a slash command is part of the replacement range.
    */
   override getCompletePosition(
     { context }: { context: Context },
