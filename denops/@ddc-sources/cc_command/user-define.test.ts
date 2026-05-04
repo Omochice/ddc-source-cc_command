@@ -74,7 +74,7 @@ describe("collectGlobal", () => {
       });
     });
 
-    it("reads a skill SKILL.md and tags it as (skill)", async () => {
+    it("reads a skill SKILL.md", async () => {
       await withTempConfigDir(async (configDir) => {
         const skillDir = join(configDir, "skills", "foo");
         await Deno.mkdir(skillDir, { recursive: true });
@@ -86,7 +86,7 @@ describe("collectGlobal", () => {
         const items = await collectGlobal(configDir);
 
         expect(items).toEqual([
-          { word: "/foo", info: "Do the foo skill (skill)" },
+          { word: "/foo", info: "Do the foo skill" },
         ]);
       });
     });
@@ -102,7 +102,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/actual-dir", info: "d (skill)" }]);
+        expect(items).toEqual([{ word: "/actual-dir", info: "d" }]);
       });
     });
 
@@ -125,7 +125,7 @@ describe("collectGlobal", () => {
 
         const sorted = [...items].sort((a, b) => a.word.localeCompare(b.word));
         expect(sorted).toEqual([
-          { word: "/bar", info: "s (skill)" },
+          { word: "/bar", info: "s" },
           { word: "/foo", info: "c" },
         ]);
       });
@@ -144,7 +144,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "" }]);
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
 
@@ -159,7 +159,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "" }]);
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
 
@@ -171,7 +171,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "" }]);
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
   });
@@ -228,7 +228,7 @@ describe("collectGlobal", () => {
         const items = await collectGlobal(configDir);
 
         expect(items).toEqual([
-          { word: "/real", info: "real skill (skill)" },
+          { word: "/real", info: "real skill" },
         ]);
       });
     });
@@ -248,27 +248,33 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "d (skill)" }]);
+        expect(items).toEqual([{ word: "/foo", info: "d" }]);
       });
     });
   });
 
   describe("error handling", () => {
-    it("warns and yields word-only item for malformed YAML in a command", async () => {
+    it("recovers description via fallback when std YAML parser fails", async () => {
       await withTempConfigDir(async (configDir) => {
         const dir = join(configDir, "commands");
         await Deno.mkdir(dir, { recursive: true });
         await Deno.writeTextFile(
           join(dir, "foo.md"),
-          "---\ndescription: : : :\n  not: valid\n---\n",
+          [
+            "---",
+            "description: Validate implementation",
+            "allowed-tools: Bash, Glob, Grep, Read, LS",
+            "argument-hint: [feature-name] [task-numbers]",
+            "---",
+            "",
+          ].join("\n"),
         );
 
-        const { result, warnings } = await captureWarnings(() =>
-          collectGlobal(configDir)
-        );
+        const items = await collectGlobal(configDir);
 
-        expect(result).toEqual([{ word: "/foo", info: "" }]);
-        expect(warnings.length).toBeGreaterThan(0);
+        expect(items).toEqual([
+          { word: "/foo", info: "Validate implementation" },
+        ]);
       });
     });
 
@@ -369,7 +375,7 @@ describe("collectGlobal", () => {
             a.word.localeCompare(b.word)
           );
           expect(sorted).toEqual([
-            { word: "/blocked", info: "" },
+            { word: "/blocked" },
             { word: "/ok", info: "ok" },
           ]);
         } finally {
@@ -413,7 +419,7 @@ describe("collectGlobal", () => {
         const items = await collectGlobal(configDir);
 
         expect(items).toEqual([
-          { word: "/linked-skill", info: "linked skill (skill)" },
+          { word: "/linked-skill", info: "linked skill" },
         ]);
       });
     });
