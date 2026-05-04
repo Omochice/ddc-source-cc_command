@@ -27,7 +27,7 @@ export class Source extends BaseSource<Params> {
   constructor() {
     super();
     this.#home = Deno.env.get("HOME") ?? "";
-    this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ??
+    this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ||
       join(this.#home, ".claude");
   }
 
