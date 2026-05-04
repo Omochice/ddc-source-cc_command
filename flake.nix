@@ -50,7 +50,9 @@
             };
           in
           {
-            settings.global.excludes = [ ];
+            settings.global.excludes = [
+              "CHANGELOG.md"
+            ];
             settings.formatter = {
               # keep-sorted start block=yes
               rumdl = {
