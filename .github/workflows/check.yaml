@@ -112,7 +112,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Validate renovate config
-        run: nix run .#check-renovate-config
+        run: nix build .#checks.x86_64-linux.renovate
   status-check:
     timeout-minutes: 5
     runs-on: ubuntu-latest
