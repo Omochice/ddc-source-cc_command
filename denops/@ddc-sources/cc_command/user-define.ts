@@ -56,7 +56,7 @@ async function commandEntryItems(
   }
   const base = entry.name.slice(0, -".md".length);
   const word = `/${[...segments, base].join(":")}`;
-  const text = readTextFileSafe(path);
+  const text = await readTextFileSafe(path);
   if (text == null) {
     return [{ word }];
   }
@@ -89,7 +89,7 @@ async function skillEntryItem(
     return null;
   }
   const word = `/${entry.name}`;
-  const text = readTextFileSafe(skillFile);
+  const text = await readTextFileSafe(skillFile);
   if (text == null) {
     return { word };
   }
@@ -189,9 +189,9 @@ async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
   }
 }
 
-function readTextFileSafe(path: string): string | null {
+async function readTextFileSafe(path: string): Promise<string | null> {
   try {
-    return Deno.readTextFileSync(path);
+    return await Deno.readTextFile(path);
   } catch (err) {
     console.warn(`Failed to read "${path}": ${err}`);
     return null;
