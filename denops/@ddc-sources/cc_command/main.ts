@@ -47,9 +47,9 @@ export class Source extends BaseSource<Params> {
   /**
    * Returns the full set of completion candidates for the current buffer.
    *
-   * @param args ddc gather arguments supplied by the host.
+   * @param args.denops denops instance
    */
-  override async gather(args: {
+  override async gather({ denops }: {
     denops: Denops;
     options: DdcOptions;
     sourceOptions: SourceOptions;
@@ -61,7 +61,7 @@ export class Source extends BaseSource<Params> {
       tasks.push(collectGlobal(this.#configDir));
     }
     if (this.#home) {
-      tasks.push(collectLocal(await getcwd(args.denops), this.#home));
+      tasks.push(collectLocal(await getcwd(denops), this.#home));
     }
     const results = await Promise.all(tasks);
     return [...builtins, ...results.flat()];
