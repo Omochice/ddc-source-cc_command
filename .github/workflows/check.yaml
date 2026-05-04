@@ -97,9 +97,12 @@ jobs:
       - uses: ./.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix run .#test
+      - name: Run tests with coverage
+        run: nix run .#test
       - uses: k1LoW/octocov-action@b3b6ee60482a667950f87553abf1df63217235d9 # v1.5.1
         if: always()
+        with:
+          config: octocov.yaml
   check-renovate-config:
     needs: path-filter
     if: needs.path-filter.outputs.renovate == 'true' || needs.path-filter.outputs.flake == 'true'

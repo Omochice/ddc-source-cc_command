@@ -119,6 +119,7 @@
           '';
           test = runAs "test" "Run deno tests with coverage" [ pkgs.deno ] ''
             deno task test --coverage=coverage
+            deno coverage --lcov --output=coverage/lcov.info coverage
           '';
         };
         checks = {
