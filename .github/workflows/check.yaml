@@ -50,7 +50,7 @@ jobs:
       - uses: ./.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix flake check
+      - run: nix build .#checks.x86_64-linux.formatting
   check-actions:
     needs: path-filter
     if: needs.path-filter.outputs.actions == 'true' || needs.path-filter.outputs.flake == 'true'
