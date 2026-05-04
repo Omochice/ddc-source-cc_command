@@ -27,7 +27,7 @@ CONFIGURATIONS				*ddc-source-cc_command-configurations*
 
 >vim
 	call ddc#custom#patch_global('sources', ['cc_command'])
-	
+
 	call ddc#custom#patch_global('sourceOptions', #{
 	      \   cc_command: #{
 	      \     mark: 'C.C',
