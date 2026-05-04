@@ -68,7 +68,7 @@ jobs:
       - uses: ./.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix run .#check-actions
+      - run: nix build .#checks.x86_64-linux.actions
   check-deno:
     needs: path-filter
     if: needs.path-filter.outputs.deno == 'true' || needs.path-filter.outputs.flake == 'true'
