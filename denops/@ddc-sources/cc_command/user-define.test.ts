@@ -144,7 +144,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "" }]);
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
 
@@ -159,7 +159,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "" }]);
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
 
@@ -171,7 +171,7 @@ describe("collectGlobal", () => {
 
         const items = await collectGlobal(configDir);
 
-        expect(items).toEqual([{ word: "/foo", info: "" }]);
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
   });
@@ -375,7 +375,7 @@ describe("collectGlobal", () => {
             a.word.localeCompare(b.word)
           );
           expect(sorted).toEqual([
-            { word: "/blocked", info: "" },
+            { word: "/blocked" },
             { word: "/ok", info: "ok" },
           ]);
         } finally {
