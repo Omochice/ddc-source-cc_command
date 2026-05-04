@@ -112,9 +112,15 @@
       {
         # keep-sorted start block=yes
         apps = {
+          # keep-sorted start block=yes
+          check-deno = runAs "check-deno" [ pkgs.deno ] ''
+            deno task check
+            deno task lint
+          '';
           test = runAs "test" [ pkgs.deno ] ''
             deno task test --coverage=coverage
           '';
+          # keep-sorted end
         };
         checks = {
           # keep-sorted start
