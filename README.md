@@ -25,7 +25,7 @@ See [doc/](./doc/ddc-source-cc_command.txt) for more information.
 
 ## Acknowledgements
 
-This plugin is inspired:
+This plugin is inspired by:
 
 - [lambdalisue/nvim-aibo](https://github.com/lambdalisue/nvim-aibo/)
 - [biosugar0/cmp-claudecode](https://github.com/biosugar0/cmp-claudecode)
