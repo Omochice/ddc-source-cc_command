@@ -145,7 +145,7 @@ jobs:
         with:
           app-id: ${{ secrets.GH_INFRA_ID }}
           private-key: ${{ secrets.GH_INFRA_PRIVATE_KEY }}
-          "permission-administration:": read
+          permission-administration: read
       - name: Validate gh-infra manifest
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
