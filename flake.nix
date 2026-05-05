@@ -122,8 +122,8 @@
           validate-infra =
             runAs "validate-infra" "Validate github repository config" [ pkgs.gh pkgs.gh-infra ]
               ''
-                gh-infra plan --ci .github/gh-infra.yaml
                 gh-infra validate .github/gh-infra.yaml
+                gh-infra plan --ci .github/gh-infra.yaml
               '';
           check-deno = runAs "check-deno" "Run deno check and lint" [ pkgs.deno ] ''
             deno task check
