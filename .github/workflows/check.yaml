@@ -15,6 +15,7 @@ jobs:
       actions: ${{steps.changes.outputs.actions}}
       deno: ${{steps.changes.outputs.deno}}
       flake: ${{steps.changes.outputs.flake}}
+      gh_infra: ${{steps.changes.outputs.gh_infra}}
       renovate: ${{steps.changes.outputs.renovate}}
       # keep-sorted end
     runs-on: ubuntu-latest
@@ -41,6 +42,8 @@ jobs:
               - ./**/*.ts
               - deno.json
               - octocov.yaml
+            gh_infra:
+              - .github/gh-infra.yaml
   check-format:
     needs: path-filter
     timeout-minutes: 10
@@ -122,6 +125,31 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Validate renovate config
         run: nix build ".#checks.$(nix eval --impure --raw --expr builtins.currentSystem).renovate"
+  check-gh-infra:
+    needs: path-filter
+    if: needs.path-filter.outputs.gh_infra == 'true' || needs.path-filter.outputs.flake == 'true'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions: {}
+    environment: gh-infra
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_INFRA_ID }}
+          private-key: ${{ secrets.GH_INFRA_PRIVATE_KEY }}
+          "permission-administration:": read
+      - name: Validate gh-infra manifest
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: nix run .#validate-infra
   status-check:
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -131,6 +159,7 @@ jobs:
       - check-deno
       - test
       - check-renovate-config
+      - check-gh-infra
     permissions: {}
     if: always()
     steps:
