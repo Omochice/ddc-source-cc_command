@@ -1,40 +1,69 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 
+// NOTE: Commands that the CLI keeps but never shows in
+// its slash menu (hidden or permanently disabled ones) are intentionally omitted.
+
 /**
  * Built-in Claude Code slash commands shipped with the CLI itself.
  *
  * Each entry pairs the slash word that triggers completion with a short
  * description used as the candidate's `info` text.
+ *
+ * The list follows Claude Code 2.1.204.
  */
 export const builtins = [
-  { word: "/add-dir", info: "Add a working directory for file access" },
-  { word: "/agents", info: "Manage agent configurations" },
+  { word: "/add-dir", info: "Add a new working directory" },
+  {
+    word: "/advisor",
+    info: "Let Claude consult a stronger model at key moments",
+  },
+  {
+    word: "/agents",
+    info:
+      "(removed) Ask Claude to create/manage subagents, or edit .claude/agents/",
+  },
   {
     word: "/allowed-tools",
-    info: "Manage tool permission rules (alias for /permissions)",
+    info:
+      "Manage allow and deny tool permission rules (alias for /permissions)",
   },
   {
     word: "/android",
     info: "Show QR code to download the Claude mobile app (alias for /mobile)",
   },
   {
-    word: "/app",
-    info:
-      "Continue the current session in the Claude Code Desktop app (alias for /desktop)",
+    word: "/artifact-design",
+    info: "Design guidance for Artifacts (skill)",
+  },
+  {
+    word: "/auto-mode-setup",
+    info: "Set up and customise auto mode (skill)",
+  },
+  {
+    word: "/autocompact",
+    info: "Set how full the context gets before auto-summarizing",
   },
   {
     word: "/autofix-pr",
-    info:
-      "Spawn a web session that watches the PR and pushes fixes for CI failures",
+    info: "Monitor and autofix any issues with the current PR",
+  },
+  {
+    word: "/background",
+    info: "Send this session to the background and free the terminal",
   },
   {
     word: "/bashes",
-    info: "List and manage background tasks (alias for /tasks)",
+    info:
+      "View and manage everything running in the background (alias for /tasks)",
   },
   {
     word: "/batch",
+    info: "Plan a large change; background agents each open a PR (skill)",
+  },
+  {
+    word: "/bg",
     info:
-      "Orchestrate large-scale changes across a codebase in parallel (skill)",
+      "Send this session to the background and free the terminal (alias for /background)",
   },
   {
     word: "/branch",
@@ -42,145 +71,164 @@ export const builtins = [
   },
   {
     word: "/btw",
-    info: "Ask a quick side question without adding to the conversation",
+    info:
+      "Ask a quick side question without interrupting the main conversation",
   },
-  {
-    word: "/bug",
-    info: "Submit feedback about Claude Code (alias for /feedback)",
-  },
+  { word: "/cd", info: "Move this session to a new working directory" },
   {
     word: "/checkpoint",
     info:
-      "Rewind the conversation and/or code to a previous point (alias for /rewind)",
+      "Restore the code and/or conversation to a previous point (alias for /rewind)",
   },
-  { word: "/chrome", info: "Configure Claude in Chrome settings" },
+  { word: "/chrome", info: "Open Claude in Chrome settings" },
   {
     word: "/claude-api",
-    info:
-      "Load Claude API reference material for your project's language (skill)",
+    info: "Build and debug apps that use the Claude API (skill)",
+  },
+  {
+    word: "/claude-code-docs",
+    info: "Answer questions about Claude Code features and settings (skill)",
+  },
+  {
+    word: "/claude-in-chrome",
+    info: "Let Claude browse and interact with pages in your Chrome (skill)",
   },
   {
     word: "/clear",
-    info: "Start a new conversation with empty context",
+    info:
+      "Start a new session with empty context; previous session stays on disk (resumable with /resume)",
   },
   {
-    word: "/color",
-    info: "Set the prompt bar color for the current session",
+    word: "/code-review",
+    info: "Review the current diff for bugs and cleanups (skill)",
   },
+  {
+    word: "/code-walkthrough",
+    info: "Generate an interactive walkthrough artifact for code (skill)",
+  },
+  { word: "/color", info: "Set the prompt bar color for this session" },
   {
     word: "/compact",
     info: "Free up context by summarizing the conversation so far",
   },
-  { word: "/config", info: "Open the Settings interface" },
+  { word: "/config", info: "Open settings" },
   {
     word: "/context",
     info: "Visualize current context usage as a colored grid",
   },
   {
     word: "/continue",
-    info: "Resume a conversation by ID or name (alias for /resume)",
+    info: "Resume a previous conversation (alias for /resume)",
   },
   {
     word: "/copy",
-    info: "Copy the last assistant response to clipboard",
+    info:
+      "Copy Claude's last response to clipboard (or /copy N for the Nth-latest)",
   },
   {
     word: "/cost",
-    info: "Show plan usage limits and activity stats (alias for /usage)",
+    info:
+      "Show session cost, plan usage, and activity stats (alias for /usage)",
+  },
+  { word: "/daemon", info: "Manage background services and routines" },
+  {
+    word: "/dataviz",
+    info: "Chart and dashboard design guidance (skill)",
   },
   {
     word: "/debug",
-    info: "Enable debug logging and troubleshoot session issues (skill)",
+    info: "Turn on debug logging and investigate problems (skill)",
   },
   {
-    word: "/desktop",
-    info: "Continue the current session in the Claude Code Desktop app",
-  },
-  {
-    word: "/diff",
+    word: "/design",
     info:
-      "Open an interactive diff viewer for uncommitted and per-turn changes",
+      "Work with Claude Design (claude.ai/design): create, import, export, sync, login (skill)",
   },
+  {
+    word: "/design-login",
+    info:
+      "Authorize design-system access for /design-sync with your claude.ai account",
+  },
+  {
+    word: "/design-sync",
+    info: "Push your design system components to claude.ai/design (skill)",
+  },
+  { word: "/diff", info: "View uncommitted changes and per-turn diffs" },
   {
     word: "/doctor",
     info: "Diagnose and verify your Claude Code installation and settings",
   },
-  { word: "/effort", info: "Set the model effort level" },
+  { word: "/effort", info: "Set effort level for model usage" },
   { word: "/exit", info: "Exit the CLI" },
   {
     word: "/export",
-    info: "Export the current conversation as plain text",
-  },
-  {
-    word: "/extra-usage",
-    info: "Configure extra usage to keep working when rate limits are hit",
+    info: "Export the current conversation to a file or clipboard",
   },
   { word: "/fast", info: "Toggle fast mode on or off" },
-  { word: "/feedback", info: "Submit feedback about Claude Code" },
+  {
+    word: "/feedback",
+    info: "Submit feedback, report a bug, or share your conversation",
+  },
   {
     word: "/fewer-permission-prompts",
-    info:
-      "Add an allowlist for common read-only tools to project settings (skill)",
+    info: "Pre-approve safe read-only commands based on your usage (skill)",
   },
   {
     word: "/focus",
-    info: "Toggle the focus view (last prompt, tool summary, final response)",
+    info: "Toggle focus view: just your prompt, summary, and response",
   },
   {
     word: "/fork",
-    info: "Create a branch of the current conversation (alias for /branch)",
+    info: "Spawn a background agent that inherits the full conversation",
   },
-  {
-    word: "/heapdump",
-    info:
-      "Write a JS heap snapshot and memory breakdown for diagnosing memory usage",
-  },
+  { word: "/goal", info: "Set a goal Claude checks before stopping" },
   { word: "/help", info: "Show help and available commands" },
   { word: "/hooks", info: "View hook configurations for tool events" },
   { word: "/ide", info: "Manage IDE integrations and show status" },
-  { word: "/init", info: "Initialize project with a CLAUDE.md guide" },
+  {
+    word: "/init",
+    info: "Initialize a new CLAUDE.md file with codebase documentation",
+  },
   {
     word: "/insights",
     info: "Generate a report analyzing your Claude Code sessions",
   },
+  { word: "/install", info: "Install Claude Code native build" },
   {
     word: "/install-github-app",
-    info: "Set up the Claude GitHub Actions app for a repository",
+    info: "Set up Claude GitHub Actions for a repository",
   },
-  {
-    word: "/install-slack-app",
-    info: "Install the Claude Slack app via OAuth",
-  },
+  { word: "/install-slack-app", info: "Install the Claude Slack app" },
   {
     word: "/ios",
     info: "Show QR code to download the Claude mobile app (alias for /mobile)",
   },
-  {
-    word: "/keybindings",
-    info: "Open or create your keybindings configuration file",
-  },
-  { word: "/login", info: "Sign in to your Anthropic account" },
+  { word: "/keybindings", info: "Open your keyboard shortcuts file" },
+  { word: "/login", info: "Sign in with your Anthropic account" },
   { word: "/logout", info: "Sign out from your Anthropic account" },
   {
     word: "/loop",
-    info: "Run a prompt repeatedly while the session stays open (skill)",
+    info:
+      "Repeat a prompt or command on an interval (e.g. /loop 5m /foo) (skill)",
   },
   {
-    word: "/mcp",
-    info: "Manage MCP server connections and OAuth authentication",
+    word: "/marketplace",
+    info: "Manage Claude Code plugins (alias for /plugin)",
   },
-  {
-    word: "/memory",
-    info: "Edit CLAUDE.md memory files and manage auto-memory entries",
-  },
+  { word: "/mcp", info: "Manage MCP servers" },
+  { word: "/memory", info: "Open a memory file in your editor" },
   {
     word: "/mobile",
     info: "Show QR code to download the Claude mobile app",
   },
-  { word: "/model", info: "Select or change the AI model" },
+  { word: "/model", info: "Set the AI model for Claude Code" },
+  {
+    word: "/name",
+    info: "Rename the current conversation (alias for /rename)",
+  },
   {
     word: "/new",
-    info: "Start a new conversation with empty context (alias for /clear)",
+    info: "Start a new session with empty context (alias for /clear)",
   },
   {
     word: "/passes",
@@ -188,159 +236,212 @@ export const builtins = [
   },
   {
     word: "/permissions",
-    info: "Manage allow, ask, and deny rules for tool permissions",
+    info: "Manage allow and deny tool permission rules",
   },
-  { word: "/plan", info: "Enter plan mode directly from the prompt" },
+  {
+    word: "/plan",
+    info: "Enable plan mode or view the current session plan",
+  },
+  {
+    word: "/plan-artifact",
+    info: "Publish a plan as a shareable Artifact (skill)",
+  },
   { word: "/plugin", info: "Manage Claude Code plugins" },
   {
+    word: "/plugins",
+    info: "Manage Claude Code plugins (alias for /plugin)",
+  },
+  {
     word: "/powerup",
-    info: "Discover Claude Code features through interactive lessons",
+    info: "Discover Claude Code features through quick interactive lessons",
+  },
+  {
+    word: "/pr-explainer",
+    info: "Generate a shareable walkthrough artifact for a PR (skill)",
   },
   {
     word: "/privacy-settings",
-    info: "View and update your privacy settings (Pro and Max only)",
+    info: "View and update your privacy settings",
   },
   {
     word: "/proactive",
-    info:
-      "Run a prompt repeatedly while the session stays open (alias for /loop)",
+    info: "Repeat a prompt or command on an interval (alias for /loop) (skill)",
   },
   { word: "/quit", info: "Exit the CLI (alias for /exit)" },
   {
     word: "/rc",
     info:
-      "Make this session available for remote control (alias for /remote-control)",
+      "Control this session from your phone or claude.ai/code (alias for /remote-control)",
   },
-  {
-    word: "/recap",
-    info: "Generate a one-line summary of the current session",
-  },
-  {
-    word: "/release-notes",
-    info: "View the changelog in an interactive version picker",
-  },
+  { word: "/recap", info: "Generate a one-line session recap now" },
+  { word: "/release-notes", info: "View release notes" },
   {
     word: "/reload-plugins",
-    info:
-      "Reload all active plugins to apply pending changes without restarting",
+    info: "Activate pending plugin changes in the current session",
+  },
+  {
+    word: "/reload-skills",
+    info: "Pick up skills added or changed on disk during this session",
   },
   {
     word: "/remote-control",
-    info: "Make this session available for remote control from claude.ai",
+    info: "Control this session from your phone or claude.ai/code",
   },
   {
     word: "/remote-env",
-    info: "Configure the default remote environment for web sessions",
+    info: "Choose the default environment for cloud agents",
   },
-  {
-    word: "/rename",
-    info: "Rename the current session and show the name on the prompt bar",
-  },
+  { word: "/rename", info: "Rename the current conversation" },
   {
     word: "/reset",
-    info: "Start a new conversation with empty context (alias for /clear)",
+    info: "Start a new session with empty context (alias for /clear)",
   },
-  {
-    word: "/resume",
-    info: "Resume a conversation by ID or name, or open the session picker",
-  },
+  { word: "/resume", info: "Resume a previous conversation" },
   {
     word: "/review",
-    info: "Review a pull request locally in your current session",
+    info:
+      "Review a GitHub pull request; for your working diff use /code-review",
   },
   {
     word: "/rewind",
-    info: "Rewind the conversation and/or code to a previous point",
+    info: "Restore the code and/or conversation to a previous point",
   },
   {
     word: "/routines",
-    info: "Create, update, list, or run routines (alias for /schedule)",
+    info:
+      "Create and manage routines: cloud agents on a schedule (alias for /schedule)",
   },
-  { word: "/sandbox", info: "Toggle sandbox mode" },
-  { word: "/schedule", info: "Create, update, list, or run routines" },
+  {
+    word: "/run",
+    info: "Launch this project's app to see your change working (skill)",
+  },
+  {
+    word: "/run-skill-generator",
+    info: "Create a skill that knows how to run this project's app (skill)",
+  },
+  {
+    word: "/sandbox",
+    info: "Show sandbox status and configure sandbox settings",
+  },
+  {
+    word: "/schedule",
+    info: "Create and manage routines: cloud agents on a schedule (skill)",
+  },
+  { word: "/scroll-speed", info: "Adjust mouse wheel scroll speed" },
   {
     word: "/security-review",
     info:
-      "Analyze pending changes on the current branch for security vulnerabilities",
+      "Complete a security review of the pending changes on the current branch",
   },
   {
     word: "/settings",
-    info: "Open the Settings interface (alias for /config)",
+    info: "Open settings (alias for /config)",
   },
   {
     word: "/setup-bedrock",
-    info: "Configure Amazon Bedrock authentication, region, and model pins",
+    info: "Reconfigure Amazon Bedrock authentication, region, or model pins",
+  },
+  {
+    word: "/setup-cowork",
+    info:
+      "Guided setup: pick a role, install a plugin, try a skill, connect tools (skill)",
   },
   {
     word: "/setup-vertex",
-    info: "Configure Google Vertex AI authentication, project, and region",
+    info:
+      "Reconfigure Google Vertex AI authentication, project, region, or model pins",
   },
   {
     word: "/simplify",
-    info:
-      "Review recently changed files for reuse, quality, and efficiency (skill)",
+    info: "Clean up the changed code without changing behavior (skill)",
+  },
+  {
+    word: "/skill-doctor",
+    info: "Show which loaded skills are unused and costing context",
   },
   { word: "/skills", info: "List available skills" },
   {
     word: "/stats",
-    info: "Show plan usage limits and activity stats (alias for /usage)",
+    info:
+      "Show session cost, plan usage, and activity stats (alias for /usage)",
   },
-  { word: "/status", info: "Open the Settings interface (Status tab)" },
-  { word: "/statusline", info: "Configure Claude Code's status line" },
+  {
+    word: "/status",
+    info:
+      "Show Claude Code status including version, model, account, API connectivity, and tool statuses",
+  },
+  { word: "/statusline", info: "Set up Claude Code's status line UI" },
   { word: "/stickers", info: "Order Claude Code stickers" },
-  { word: "/tasks", info: "List and manage background tasks" },
+  {
+    word: "/stop",
+    info: "Stop this background session; transcript and worktree are kept",
+  },
+  {
+    word: "/tasks",
+    info: "View and manage everything running in the background",
+  },
   {
     word: "/team-onboarding",
-    info:
-      "Generate a team onboarding guide from your Claude Code usage history",
+    info: "Help teammates ramp on Claude Code with a guide from your usage",
   },
   {
     word: "/teleport",
-    info: "Pull a Claude Code on the web session into this terminal",
+    info: "Resume a Claude Code session from claude.ai",
   },
   {
     word: "/terminal-setup",
-    info: "Configure terminal keybindings for Shift+Enter and other shortcuts",
+    info: "Configure terminal keybindings and integrations",
   },
-  { word: "/theme", info: "Change the color theme" },
+  { word: "/theme", info: "Change the theme" },
   {
     word: "/tp",
-    info:
-      "Pull a Claude Code on the web session into this terminal (alias for /teleport)",
+    info: "Resume a Claude Code session from claude.ai (alias for /teleport)",
   },
   {
     word: "/tui",
-    info: "Set the terminal UI renderer (default or fullscreen)",
+    info: "Set the terminal UI renderer (default | fullscreen)",
   },
   {
     word: "/ultraplan",
-    info:
-      "Draft a plan in an ultraplan session, review it, then execute remotely or locally",
+    info: "Draft an editable plan in Claude Code on the web",
   },
   {
     word: "/ultrareview",
-    info: "Run a deep, multi-agent code review in a cloud sandbox",
+    info: "Start a cloud agent that finds and verifies bugs in your branch",
   },
   {
     word: "/undo",
     info:
-      "Rewind the conversation and/or code to a previous point (alias for /rewind)",
+      "Restore the code and/or conversation to a previous point (alias for /rewind)",
+  },
+  {
+    word: "/update-config",
+    info: "Change settings: hooks, permissions, environment variables (skill)",
   },
   {
     word: "/upgrade",
-    info: "Open the upgrade page to switch to a higher plan tier",
+    info: "Upgrade to Max for higher rate limits and more Opus",
   },
   {
     word: "/usage",
-    info: "Show session cost, plan usage limits, and activity stats",
+    info: "Show session cost, plan usage, and activity stats",
   },
   {
-    word: "/voice",
-    info: "Toggle voice dictation, or enable it in a specific mode",
+    word: "/usage-credits",
+    info: "Configure usage credits to keep working when you hit a limit",
   },
+  {
+    word: "/verify",
+    info:
+      "Verify a code change end-to-end by exercising it and observing behavior (skill)",
+  },
+  { word: "/voice", info: "Toggle voice mode" },
   {
     word: "/web-setup",
-    info:
-      "Connect your GitHub account to Claude Code on the web using your gh CLI credentials",
+    info: "Set up Claude Code on the web with your GitHub account",
+  },
+  {
+    word: "/workflows",
+    info: "Browse running and completed workflows",
   },
 ] as const satisfies Item[];
