@@ -1,5 +1,5 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
-import { dirname, join, resolve } from "jsr:@std/path@1.1.4";
+import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
 import { parseDescription } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
 
