@@ -9,7 +9,7 @@ import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
  * Each entry pairs the slash word that triggers completion with a short
  * description used as the candidate's `info` text.
  *
- * The list follows Claude Code 2.1.204.
+ * The list follows Claude Code 2.1.241.
  */
 export const builtins = [
   { word: "/add-dir", info: "Add a new working directory" },
@@ -32,12 +32,26 @@ export const builtins = [
     info: "Show QR code to download the Claude mobile app (alias for /mobile)",
   },
   {
-    word: "/artifact-design",
-    info: "Design guidance for Artifacts (skill)",
+    word: "/app",
+    info: "Continue the current session in Claude Desktop (alias for /desktop)",
   },
   {
+    word: "/artifact-capabilities",
+    info: "Runtime capabilities for published Artifacts (skill)",
+  },
+  {
+    word: "/artifact-components",
+    info: "Embed reusable components in an Artifact (skill)",
+  },
+  { word: "/artifact-design", info: "Design guidance for Artifacts (skill)" },
+  {
+    word: "/artifact-diagramming",
+    info: "Diagramming guidance for Artifacts (skill)",
+  },
+  { word: "/artifacts", info: "Browse your published and shared artifacts" },
+  {
     word: "/auto-mode-setup",
-    info: "Set up and customise auto mode (skill)",
+    info: "Teach auto mode about your environment, plus optional rule tweaks",
   },
   {
     word: "/autocompact",
@@ -69,16 +83,23 @@ export const builtins = [
     word: "/branch",
     info: "Create a branch of the current conversation at this point",
   },
+  { word: "/brief", info: "Toggle brief-only mode" },
   {
     word: "/btw",
     info:
       "Ask a quick side question without interrupting the main conversation",
   },
+  { word: "/bug", info: "Report a bug or share your conversation" },
   { word: "/cd", info: "Move this session to a new working directory" },
   {
     word: "/checkpoint",
     info:
       "Restore the code and/or conversation to a previous point (alias for /rewind)",
+  },
+  {
+    word: "/checkup",
+    info:
+      "Health-check your setup and fix issues: installation, unused extensions, duplicated or bloated memory files, slow hooks, updates, permissions (alias for /doctor) (skill)",
   },
   { word: "/chrome", info: "Open Claude in Chrome settings" },
   {
@@ -100,13 +121,10 @@ export const builtins = [
   },
   {
     word: "/code-review",
-    info: "Review the current diff for bugs and cleanups (skill)",
-  },
-  {
-    word: "/code-walkthrough",
-    info: "Generate an interactive walkthrough artifact for code (skill)",
+    info: "Review the current diff or a PR for bugs and cleanups (skill)",
   },
   { word: "/color", info: "Set the prompt bar color for this session" },
+  { word: "/commit", info: "Create a git commit (skill)" },
   {
     word: "/compact",
     info: "Free up context by summarizing the conversation so far",
@@ -130,11 +148,7 @@ export const builtins = [
     info:
       "Show session cost, plan usage, and activity stats (alias for /usage)",
   },
-  { word: "/daemon", info: "Manage background services and routines" },
-  {
-    word: "/dataviz",
-    info: "Chart and dashboard design guidance (skill)",
-  },
+  { word: "/dataviz", info: "Chart and dashboard design guidance (skill)" },
   {
     word: "/debug",
     info: "Turn on debug logging and investigate problems (skill)",
@@ -142,7 +156,7 @@ export const builtins = [
   {
     word: "/design",
     info:
-      "Work with Claude Design (claude.ai/design): create, import, export, sync, login (skill)",
+      "Draft a design on a canvas Artifact, editable where saving is enabled (Claude Design preview) (skill)",
   },
   {
     word: "/design-login",
@@ -153,22 +167,25 @@ export const builtins = [
     word: "/design-sync",
     info: "Push your design system components to claude.ai/design (skill)",
   },
+  { word: "/desktop", info: "Continue the current session in Claude Desktop" },
   { word: "/diff", info: "View uncommitted changes and per-turn diffs" },
   {
     word: "/doctor",
-    info: "Diagnose and verify your Claude Code installation and settings",
+    info:
+      "Health-check your setup and fix issues: installation, unused extensions, duplicated or bloated memory files, slow hooks, updates, permissions (skill)",
   },
   { word: "/effort", info: "Set effort level for model usage" },
   { word: "/exit", info: "Exit the CLI" },
+  {
+    word: "/explain-usage",
+    info: "See where this session's tokens went, in plain words (skill)",
+  },
   {
     word: "/export",
     info: "Export the current conversation to a file or clipboard",
   },
   { word: "/fast", info: "Toggle fast mode on or off" },
-  {
-    word: "/feedback",
-    info: "Submit feedback, report a bug, or share your conversation",
-  },
+  { word: "/feedback", info: "Send feedback to Anthropic or report a bug" },
   {
     word: "/fewer-permission-prompts",
     info: "Pre-approve safe read-only commands based on your usage (skill)",
@@ -179,12 +196,14 @@ export const builtins = [
   },
   {
     word: "/fork",
-    info: "Spawn a background agent that inherits the full conversation",
+    info:
+      "Copy this conversation into a new background session and keep working here",
   },
   { word: "/goal", info: "Set a goal Claude checks before stopping" },
   { word: "/help", info: "Show help and available commands" },
   { word: "/hooks", info: "View hook configurations for tool events" },
   { word: "/ide", info: "Manage IDE integrations and show status" },
+  { word: "/import", info: "Import config from another AI coding agent" },
   {
     word: "/init",
     info: "Initialize a new CLAUDE.md file with codebase documentation",
@@ -193,7 +212,6 @@ export const builtins = [
     word: "/insights",
     info: "Generate a report analyzing your Claude Code sessions",
   },
-  { word: "/install", info: "Install Claude Code native build" },
   {
     word: "/install-github-app",
     info: "Set up Claude GitHub Actions for a repository",
@@ -204,6 +222,11 @@ export const builtins = [
     info: "Show QR code to download the Claude mobile app (alias for /mobile)",
   },
   { word: "/keybindings", info: "Open your keyboard shortcuts file" },
+  {
+    word: "/list-agents",
+    info:
+      "List subagents, teammates, and other Claude sessions you can message",
+  },
   { word: "/login", info: "Sign in with your Anthropic account" },
   { word: "/logout", info: "Sign out from your Anthropic account" },
   {
@@ -216,11 +239,8 @@ export const builtins = [
     info: "Manage Claude Code plugins (alias for /plugin)",
   },
   { word: "/mcp", info: "Manage MCP servers" },
-  { word: "/memory", info: "Open a memory file in your editor" },
-  {
-    word: "/mobile",
-    info: "Show QR code to download the Claude mobile app",
-  },
+  { word: "/memory", info: "Edit CLAUDE.md files and memory settings" },
+  { word: "/mobile", info: "Show QR code to download the Claude mobile app" },
   { word: "/model", info: "Set the AI model for Claude Code" },
   {
     word: "/name",
@@ -230,44 +250,28 @@ export const builtins = [
     word: "/new",
     info: "Start a new session with empty context (alias for /clear)",
   },
+  { word: "/passes", info: "Share a free week of Claude Code with friends" },
   {
-    word: "/passes",
-    info: "Share a free week of Claude Code with friends",
+    word: "/peers",
+    info:
+      "List subagents, teammates, and other Claude sessions you can message (alias for /list-agents)",
   },
-  {
-    word: "/permissions",
-    info: "Manage allow and deny tool permission rules",
-  },
-  {
-    word: "/plan",
-    info: "Enable plan mode or view the current session plan",
-  },
-  {
-    word: "/plan-artifact",
-    info: "Publish a plan as a shareable Artifact (skill)",
-  },
+  { word: "/permissions", info: "Manage allow and deny tool permission rules" },
+  { word: "/plan", info: "Enable plan mode or view the current session plan" },
   { word: "/plugin", info: "Manage Claude Code plugins" },
-  {
-    word: "/plugins",
-    info: "Manage Claude Code plugins (alias for /plugin)",
-  },
+  { word: "/plugins", info: "Manage Claude Code plugins (alias for /plugin)" },
   {
     word: "/powerup",
     info: "Discover Claude Code features through quick interactive lessons",
   },
-  {
-    word: "/pr-explainer",
-    info: "Generate a shareable walkthrough artifact for a PR (skill)",
-  },
-  {
-    word: "/privacy-settings",
-    info: "View and update your privacy settings",
-  },
+  { word: "/pr", info: "Create a pull request (skill)" },
+  { word: "/privacy-settings", info: "View and update your privacy settings" },
   {
     word: "/proactive",
     info: "Repeat a prompt or command on an interval (alias for /loop) (skill)",
   },
   { word: "/quit", info: "Exit the CLI (alias for /exit)" },
+  { word: "/radio", info: "Listen to Claude FM lo-fi radio" },
   {
     word: "/rc",
     info:
@@ -282,6 +286,10 @@ export const builtins = [
   {
     word: "/reload-skills",
     info: "Pick up skills added or changed on disk during this session",
+  },
+  {
+    word: "/remote",
+    info: "Show cloud session URL and QR code (alias for /session)",
   },
   {
     word: "/remote-control",
@@ -300,7 +308,7 @@ export const builtins = [
   {
     word: "/review",
     info:
-      "Review a GitHub pull request; for your working diff use /code-review",
+      "Review the current diff or a PR for bugs and cleanups (alias for /code-review) (skill)",
   },
   {
     word: "/rewind",
@@ -309,7 +317,7 @@ export const builtins = [
   {
     word: "/routines",
     info:
-      "Create and manage routines: cloud agents on a schedule (alias for /schedule)",
+      "Create and manage routines: cloud agents on a schedule (alias for /schedule) (skill)",
   },
   {
     word: "/run",
@@ -333,10 +341,8 @@ export const builtins = [
     info:
       "Complete a security review of the pending changes on the current branch",
   },
-  {
-    word: "/settings",
-    info: "Open settings (alias for /config)",
-  },
+  { word: "/session", info: "Show cloud session URL and QR code" },
+  { word: "/settings", info: "Open settings (alias for /config)" },
   {
     word: "/setup-bedrock",
     info: "Reconfigure Amazon Bedrock authentication, region, or model pins",
@@ -350,6 +356,10 @@ export const builtins = [
     word: "/setup-vertex",
     info:
       "Reconfigure Google Vertex AI authentication, project, region, or model pins",
+  },
+  {
+    word: "/share",
+    info: "Report a bug or share your conversation (alias for /bug)",
   },
   {
     word: "/simplify",
@@ -377,6 +387,11 @@ export const builtins = [
     info: "Stop this background session; transcript and worktree are kept",
   },
   {
+    word: "/subtask",
+    info:
+      "Send a subagent off with your full context; its result comes back here",
+  },
+  {
     word: "/tasks",
     info: "View and manage everything running in the background",
   },
@@ -386,7 +401,7 @@ export const builtins = [
   },
   {
     word: "/teleport",
-    info: "Resume a Claude Code session from claude.ai",
+    info: "Send this session to the cloud, or resume one from claude.ai",
   },
   {
     word: "/terminal-setup",
@@ -395,12 +410,10 @@ export const builtins = [
   { word: "/theme", info: "Change the theme" },
   {
     word: "/tp",
-    info: "Resume a Claude Code session from claude.ai (alias for /teleport)",
+    info:
+      "Send this session to the cloud, or resume one from claude.ai (alias for /teleport)",
   },
-  {
-    word: "/tui",
-    info: "Set the terminal UI renderer (default | fullscreen)",
-  },
+  { word: "/tui", info: "Set the terminal UI renderer (default | fullscreen)" },
   {
     word: "/ultraplan",
     info: "Draft an editable plan in Claude Code on the web",
@@ -422,13 +435,11 @@ export const builtins = [
     word: "/upgrade",
     info: "Upgrade to Max for higher rate limits and more Opus",
   },
-  {
-    word: "/usage",
-    info: "Show session cost, plan usage, and activity stats",
-  },
+  { word: "/usage", info: "Show session cost, plan usage, and activity stats" },
   {
     word: "/usage-credits",
-    info: "Configure usage credits to keep working when you hit a limit",
+    info:
+      "Configure usage credits or request them from your admin when you hit a limit",
   },
   {
     word: "/verify",
@@ -440,8 +451,9 @@ export const builtins = [
     word: "/web-setup",
     info: "Set up Claude Code on the web with your GitHub account",
   },
+  { word: "/workflows", info: "Browse running and completed workflows" },
   {
-    word: "/workflows",
-    info: "Browse running and completed workflows",
+    word: "/workshop",
+    info: "Build a design together, one decision at a time (skill)",
   },
 ] as const satisfies Item[];
