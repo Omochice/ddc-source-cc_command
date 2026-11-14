@@ -10,3 +10,8 @@
 coverage/
 *.lcov
 
+# Ignore automatically generated direnv output
+.direnv
+
+# Ignore personal direnv additions
+.envrc.local
