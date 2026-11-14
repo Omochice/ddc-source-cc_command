@@ -9,18 +9,13 @@ import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
  * Each entry pairs the slash word that triggers completion with a short
  * description used as the candidate's `info` text.
  *
- * The list follows Claude Code 2.1.241.
+ * The list follows Claude Code 2.1.322.
  */
 export const builtins = [
   { word: "/add-dir", info: "Add a new working directory" },
   {
     word: "/advisor",
     info: "Let Claude consult a stronger model at key moments",
-  },
-  {
-    word: "/agents",
-    info:
-      "(removed) Ask Claude to create/manage subagents, or edit .claude/agents/",
   },
   {
     word: "/allowed-tools",
@@ -39,11 +34,6 @@ export const builtins = [
     word: "/artifact-capabilities",
     info: "Runtime capabilities for published Artifacts (skill)",
   },
-  {
-    word: "/artifact-components",
-    info: "Embed reusable components in an Artifact (skill)",
-  },
-  { word: "/artifact-design", info: "Design guidance for Artifacts (skill)" },
   {
     word: "/artifact-diagramming",
     info: "Diagramming guidance for Artifacts (skill)",
@@ -120,6 +110,11 @@ export const builtins = [
       "Start a new session with empty context; previous session stays on disk (resumable with /resume)",
   },
   {
+    word: "/cloud-plugins",
+    info:
+      "Choose whether cloud sessions use the plugins enabled on this machine",
+  },
+  {
     word: "/code-review",
     info: "Review the current diff or a PR for bugs and cleanups (skill)",
   },
@@ -153,11 +148,7 @@ export const builtins = [
     word: "/debug",
     info: "Turn on debug logging and investigate problems (skill)",
   },
-  {
-    word: "/design",
-    info:
-      "Draft a design on a canvas Artifact, editable where saving is enabled (Claude Design preview) (skill)",
-  },
+  { word: "/design", info: "Make a new Design artifact from a brief (skill)" },
   {
     word: "/design-login",
     info:
@@ -178,13 +169,13 @@ export const builtins = [
   { word: "/exit", info: "Exit the CLI" },
   {
     word: "/explain-usage",
-    info: "See where this session's tokens went, in plain words (skill)",
+    info: "See where this session’s tokens went, in plain words (skill)",
   },
   {
     word: "/export",
     info: "Export the current conversation to a file or clipboard",
   },
-  { word: "/fast", info: "Toggle fast mode on or off" },
+  { word: "/fast", info: "Toggle fast mode" },
   { word: "/feedback", info: "Send feedback to Anthropic or report a bug" },
   {
     word: "/fewer-permission-prompts",
@@ -250,6 +241,7 @@ export const builtins = [
     word: "/new",
     info: "Start a new session with empty context (alias for /clear)",
   },
+  { word: "/output-style", info: "List output styles or switch to one" },
   { word: "/passes", info: "Share a free week of Claude Code with friends" },
   {
     word: "/peers",
@@ -259,6 +251,11 @@ export const builtins = [
   { word: "/permissions", info: "Manage allow and deny tool permission rules" },
   { word: "/plan", info: "Enable plan mode or view the current session plan" },
   { word: "/plugin", info: "Manage Claude Code plugins" },
+  {
+    word: "/plugin-authoring",
+    info:
+      "Write a mod: a live pane, view or behaviour change in Claude Code (skill)",
+  },
   { word: "/plugins", info: "Manage Claude Code plugins (alias for /plugin)" },
   {
     word: "/powerup",
@@ -270,8 +267,16 @@ export const builtins = [
     word: "/proactive",
     info: "Repeat a prompt or command on an interval (alias for /loop) (skill)",
   },
+  {
+    word: "/project",
+    info: "Set the claude.ai Project for this session's usage reports",
+  },
   { word: "/quit", info: "Exit the CLI (alias for /exit)" },
   { word: "/radio", info: "Listen to Claude FM lo-fi radio" },
+  {
+    word: "/rate-limit-options",
+    info: "Manage usage limits and upgrade options",
+  },
   {
     word: "/rc",
     info:
@@ -304,6 +309,7 @@ export const builtins = [
     word: "/reset",
     info: "Start a new session with empty context (alias for /clear)",
   },
+  { word: "/restart", info: "Restart Claude Code and keep this session" },
   { word: "/resume", info: "Resume a previous conversation" },
   {
     word: "/review",
@@ -321,11 +327,11 @@ export const builtins = [
   },
   {
     word: "/run",
-    info: "Launch this project's app to see your change working (skill)",
+    info: "Launch this project’s app to see your change working (skill)",
   },
   {
     word: "/run-skill-generator",
-    info: "Create a skill that knows how to run this project's app (skill)",
+    info: "Create a skill that knows how to run this project’s app (skill)",
   },
   {
     word: "/sandbox",
@@ -341,6 +347,10 @@ export const builtins = [
     info:
       "Complete a security review of the pending changes on the current branch",
   },
+  {
+    word: "/send-to-project",
+    info: "Send this session's work to a Claude Project (skill)",
+  },
   { word: "/session", info: "Show cloud session URL and QR code" },
   { word: "/settings", info: "Open settings (alias for /config)" },
   {
@@ -348,9 +358,14 @@ export const builtins = [
     info: "Reconfigure Amazon Bedrock authentication, region, or model pins",
   },
   {
+    word: "/setup-claude",
+    info:
+      "Guided setup — pick a role, install a plugin, try a skill, connect tools (skill)",
+  },
+  {
     word: "/setup-cowork",
     info:
-      "Guided setup: pick a role, install a plugin, try a skill, connect tools (skill)",
+      "Guided setup — pick a role, install a plugin, try a skill, connect tools (alias for /setup-claude) (skill)",
   },
   {
     word: "/setup-vertex",
@@ -370,6 +385,10 @@ export const builtins = [
     info: "Show which loaded skills are unused and costing context",
   },
   { word: "/skills", info: "List available skills" },
+  {
+    word: "/slides",
+    info: "Make a new Slides deck artifact from a brief (skill)",
+  },
   {
     word: "/stats",
     info:
@@ -405,7 +424,7 @@ export const builtins = [
   },
   {
     word: "/terminal-setup",
-    info: "Configure terminal keybindings and integrations",
+    info: "Install Shift+Enter key binding for newlines",
   },
   { word: "/theme", info: "Change the theme" },
   {
@@ -414,10 +433,7 @@ export const builtins = [
       "Send this session to the cloud, or resume one from claude.ai (alias for /teleport)",
   },
   { word: "/tui", info: "Set the terminal UI renderer (default | fullscreen)" },
-  {
-    word: "/ultraplan",
-    info: "Draft an editable plan in Claude Code on the web",
-  },
+  { word: "/ultraplan", info: "Draft an editable plan in a cloud session" },
   {
     word: "/ultrareview",
     info: "Start a cloud agent that finds and verifies bugs in your branch",
@@ -428,12 +444,16 @@ export const builtins = [
       "Restore the code and/or conversation to a previous point (alias for /rewind)",
   },
   {
+    word: "/update",
+    info: "Restart Claude Code and keep this session (alias for /restart)",
+  },
+  {
     word: "/update-config",
     info: "Change settings: hooks, permissions, environment variables (skill)",
   },
   {
     word: "/upgrade",
-    info: "Upgrade to Max for higher rate limits and more Opus",
+    info: "Upgrade your plan for higher rate limits and more Opus",
   },
   { word: "/usage", info: "Show session cost, plan usage, and activity stats" },
   {
@@ -442,18 +462,18 @@ export const builtins = [
       "Configure usage credits or request them from your admin when you hit a limit",
   },
   {
-    word: "/verify",
-    info:
-      "Verify a code change end-to-end by exercising it and observing behavior (skill)",
+    word: "/use-case",
+    info: "Choose the Life Sciences use case that applies to your requests",
   },
+  { word: "/verify", info: "Try your change and report if it works (skill)" },
   { word: "/voice", info: "Toggle voice mode" },
   {
     word: "/web-setup",
-    info: "Set up Claude Code on the web with your GitHub account",
+    info: "Set up cloud sessions with your GitHub account",
+  },
+  {
+    word: "/workflow-authoring",
+    info: "Load the reference for writing Workflow tool scripts (skill)",
   },
   { word: "/workflows", info: "Browse running and completed workflows" },
-  {
-    word: "/workshop",
-    info: "Build a design together, one decision at a time (skill)",
-  },
 ] as const satisfies Item[];
