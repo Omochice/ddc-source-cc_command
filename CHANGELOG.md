@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/Omochice/ddc-source-cc_command/compare/v1.0.2...v1.0.3) (2026-11-14)
+
+
+### Bug Fixes
+
+* follow built-in commands of Claude Code 2.1.241 ([#49](https://github.com/Omochice/ddc-source-cc_command/issues/49)) ([347b462](https://github.com/Omochice/ddc-source-cc_command/commit/347b462a3751c944943b10c22e85cc9b212ff61d))
+* follow built-in commands of Claude Code 2.1.322 ([#64](https://github.com/Omochice/ddc-source-cc_command/issues/64)) ([d3c4b7e](https://github.com/Omochice/ddc-source-cc_command/commit/d3c4b7eb13ea4038db391668991a3886163bf5a9))
+
 ## [1.0.2](https://github.com/Omochice/ddc-source-cc_command/compare/v1.0.1...v1.0.2) (2026-07-11)
 
 
