@@ -60,10 +60,11 @@ async function resolvePluginName(
   const manifest = await readJson(
     join(installPath, ".claude-plugin", "plugin.json"),
   );
-  if (isRecord(manifest) && typeof manifest.name === "string") {
-    if (manifest.name !== "") {
-      return manifest.name;
-    }
+  if (
+    isRecord(manifest) && typeof manifest.name === "string" &&
+    manifest.name !== ""
+  ) {
+    return manifest.name;
   }
   return key.split("@")[0];
 }
