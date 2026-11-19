@@ -1,12 +1,12 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
+import { resolveEnabledPlugins } from "./enabled-plugins.ts";
+import { isRecord, type JsonObject, readJson } from "./json.ts";
 import {
   collectCommandsAndSkills,
   findProjectClaudeDir,
 } from "./user-define.ts";
-
-type JsonObject = Record<string, unknown>;
 
 /**
  * The parts of a Claude Code session that decide which plugins apply.
@@ -15,54 +15,6 @@ export type PluginSession = {
   cwd: string;
   homeDir: string;
 };
-
-function isRecord(value: unknown): value is JsonObject {
-  return typeof value === "object" && value != null && !Array.isArray(value);
-}
-
-async function readJson(path: string): Promise<unknown> {
-  try {
-    return JSON.parse(await Deno.readTextFile(path));
-  } catch {
-    return undefined;
-  }
-}
-
-async function readEnabledPlugins(
-  settingsPath: string,
-): Promise<Record<string, boolean>> {
-  const settings = await readJson(settingsPath);
-  if (!isRecord(settings) || !isRecord(settings.enabledPlugins)) {
-    return {};
-  }
-  return Object.fromEntries(
-    Object.entries(settings.enabledPlugins).filter(
-      (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
-    ),
-  );
-}
-
-/**
- * Settings files are applied in increasing precedence, mirroring how Claude
- * Code lets project settings override user settings.
- */
-async function resolveEnabled(
-  configDir: string,
-  projectClaudeDir: string | null,
-): Promise<Set<string>> {
-  const paths = [join(configDir, "settings.json")];
-  if (projectClaudeDir != null) {
-    paths.push(
-      join(projectClaudeDir, "settings.json"),
-      join(projectClaudeDir, "settings.local.json"),
-    );
-  }
-  const layers = await Promise.all(paths.map(readEnabledPlugins));
-  const merged = Object.assign({}, ...layers) as Record<string, boolean>;
-  return new Set(
-    Object.entries(merged).filter(([, on]) => on).map(([key]) => key),
-  );
-}
 
 async function resolvePluginName(
   installPath: string,
@@ -123,7 +75,7 @@ export async function collectPlugins(
     : null;
   const [installed, enabled] = await Promise.all([
     readJson(join(configDir, "plugins", "installed_plugins.json")),
-    resolveEnabled(configDir, projectClaudeDir),
+    resolveEnabledPlugins(configDir, projectClaudeDir),
   ]);
   if (!isRecord(installed) || !isRecord(installed.plugins)) {
     return [];
