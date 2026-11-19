@@ -30,10 +30,10 @@ export async function findGitRoot(dir: string): Promise<string | null> {
     const dotGit = join(current, ".git");
     const kind = await statKind(dotGit);
     if (kind === "directory") {
-      return current;
+      return await canonicalPath(current);
     }
     if (kind === "file") {
-      return (await mainCheckoutOf(dotGit)) ?? current;
+      return (await mainCheckoutOf(dotGit)) ?? await canonicalPath(current);
     }
     const parent = dirname(current);
     if (parent === current) {

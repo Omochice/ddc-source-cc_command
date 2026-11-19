@@ -37,6 +37,15 @@ describe("findGitRoot", () => {
     });
   });
 
+  it("finds the repository of a directory that no longer exists", async () => {
+    await withTempDir(async (tmp) => {
+      await Deno.mkdir(join(tmp, "repo", ".git"), { recursive: true });
+      expect(await findGitRoot(join(tmp, "repo", "gone"))).toBe(
+        await canonicalPath(join(tmp, "repo")),
+      );
+    });
+  });
+
   it("resolves a linked worktree to its main checkout", async () => {
     await withTempDir(async (tmp) => {
       const main = join(tmp, "main");

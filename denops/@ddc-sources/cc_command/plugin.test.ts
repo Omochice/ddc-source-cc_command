@@ -158,28 +158,103 @@ describe("collectPlugins", () => {
     });
   });
 
-  it("offers project-scoped plugins only inside that project", async () => {
-    await withTempDir(async (tmp) => {
+  describe("install scope", () => {
+    async function installScoped(
+      tmp: string,
+      scope: string,
+      projectPath?: string,
+    ): Promise<string> {
       const configDir = join(tmp, "config");
-      const homeDir = join(tmp, "home");
-      const projectRoot = join(tmp, "project");
-      const dotClaude = join(projectRoot, ".claude");
-      await installPlugin(configDir, tmp, "p@mkt", {
-        scope: "project",
-        projectPath: projectRoot,
-      });
+      await installPlugin(configDir, tmp, "p@mkt", { scope, projectPath });
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "p@mkt": true },
       });
-      await Deno.mkdir(dotClaude, { recursive: true });
-      expect(
-        (await collectPlugins(configDir, { cwd: projectRoot, homeDir })).length,
-      ).toBe(3);
-      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
-        .toEqual([]);
-      expect(
-        await collectPlugins(configDir, { cwd: join(tmp, "other"), homeDir }),
-      ).toEqual([]);
-    });
+      return configDir;
+    }
+
+    async function offeredIn(configDir: string, cwd: string): Promise<boolean> {
+      await Deno.mkdir(cwd, { recursive: true });
+      const items = await collectPlugins(configDir, { cwd, homeDir: "" });
+      return items.some((i) => i.word === "/p:hello");
+    }
+
+    for (const scope of ["user", "managed"]) {
+      it(`offers a ${scope}-scoped install everywhere`, async () => {
+        await withTempDir(async (tmp) => {
+          const configDir = await installScoped(tmp, scope);
+          expect(await offeredIn(configDir, join(tmp, "anywhere"))).toBe(true);
+        });
+      });
+    }
+
+    for (const scope of ["project", "local"]) {
+      describe(`a ${scope}-scoped install`, () => {
+        it("is offered in its project directory", async () => {
+          await withTempDir(async (tmp) => {
+            const project = join(tmp, "project");
+            const configDir = await installScoped(tmp, scope, project);
+            expect(await offeredIn(configDir, project)).toBe(true);
+          });
+        });
+
+        it("is offered anywhere in the same repository", async () => {
+          await withTempDir(async (tmp) => {
+            const repo = join(tmp, "repo");
+            await Deno.mkdir(join(repo, ".git"), { recursive: true });
+            const configDir = await installScoped(
+              tmp,
+              scope,
+              join(repo, "packages", "a"),
+            );
+            expect(await offeredIn(configDir, join(repo, "packages", "b")))
+              .toBe(true);
+            expect(await offeredIn(configDir, repo)).toBe(true);
+          });
+        });
+
+        it("is offered in a linked worktree of its repository", async () => {
+          await withTempDir(async (tmp) => {
+            const main = join(tmp, "main");
+            const gitDir = join(main, ".git", "worktrees", "wt");
+            await Deno.mkdir(gitDir, { recursive: true });
+            await Deno.writeTextFile(join(gitDir, "commondir"), "../..\n");
+            const worktree = join(tmp, "wt");
+            await Deno.mkdir(worktree, { recursive: true });
+            await Deno.writeTextFile(
+              join(worktree, ".git"),
+              `gitdir: ${gitDir}\n`,
+            );
+            const configDir = await installScoped(tmp, scope, main);
+            expect(await offeredIn(configDir, worktree)).toBe(true);
+          });
+        });
+
+        it("is not offered in a subdirectory outside a repository", async () => {
+          await withTempDir(async (tmp) => {
+            const project = join(tmp, "project");
+            const configDir = await installScoped(tmp, scope, project);
+            expect(await offeredIn(configDir, join(project, "sub"))).toBe(
+              false,
+            );
+          });
+        });
+
+        it("is not offered in another repository", async () => {
+          await withTempDir(async (tmp) => {
+            await Deno.mkdir(join(tmp, "a", ".git"), { recursive: true });
+            await Deno.mkdir(join(tmp, "b", ".git"), { recursive: true });
+            const configDir = await installScoped(tmp, scope, join(tmp, "a"));
+            expect(await offeredIn(configDir, join(tmp, "b"))).toBe(false);
+          });
+        });
+
+        it("is not offered without a projectPath", async () => {
+          await withTempDir(async (tmp) => {
+            const configDir = await installScoped(tmp, scope);
+            expect(await offeredIn(configDir, tmp)).toBe(false);
+          });
+        });
+      });
+    }
   });
 });

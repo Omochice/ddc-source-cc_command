@@ -1,13 +1,11 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
-import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
+import { join } from "jsr:@std/path@1.1.6";
 
 import { resolveEnabledPlugins } from "./enabled-plugins.ts";
+import { canonicalPath, findGitRoot } from "./git-root.ts";
 import { isRecord, type JsonObject, readJson } from "./json.ts";
 import type { Session } from "./session.ts";
-import {
-  collectCommandsAndSkills,
-  findProjectClaudeDir,
-} from "./user-define.ts";
+import { collectCommandsAndSkills } from "./user-define.ts";
 
 async function resolvePluginName(
   installPath: string,
@@ -26,23 +24,26 @@ async function resolvePluginName(
 }
 
 /**
- * User-scope installs apply everywhere.
- * Project and local scope installs are tied to one project, so they must not
- * leak into completions for other projects.
+ * User and managed scope installs apply everywhere.
+ * Project and local scope installs are tied to one project, which Claude Code
+ * takes to be the whole git repository it belongs to, so they must not leak
+ * into completions for other projects.
  */
-function appliesToProject(
+async function appliesToSession(
   entry: JsonObject,
-  projectClaudeDir: string | null,
-): boolean {
-  if (entry.scope === "user") {
+  where: { cwd: string; gitRoot: string | null },
+): Promise<boolean> {
+  if (entry.scope === "user" || entry.scope === "managed") {
     return true;
   }
-  if (
-    projectClaudeDir == null || typeof entry.projectPath !== "string"
-  ) {
+  if (typeof entry.projectPath !== "string") {
     return false;
   }
-  return resolve(entry.projectPath) === resolve(dirname(projectClaudeDir));
+  if (await canonicalPath(entry.projectPath) === where.cwd) {
+    return true;
+  }
+  return where.gitRoot != null &&
+    await findGitRoot(entry.projectPath) === where.gitRoot;
 }
 
 /**
@@ -60,30 +61,30 @@ export async function collectPlugins(
   configDir: string,
   session: Session,
 ): Promise<Item[]> {
-  const projectClaudeDir = session.homeDir
-    ? await findProjectClaudeDir(session.cwd, session.homeDir)
-    : null;
-  const [installed, enabled] = await Promise.all([
+  const [installed, enabled, cwd, gitRoot] = await Promise.all([
     readJson(join(configDir, "plugins", "installed_plugins.json")),
     resolveEnabledPlugins(configDir, session),
+    canonicalPath(session.cwd),
+    findGitRoot(session.cwd),
   ]);
   if (!isRecord(installed) || !isRecord(installed.plugins)) {
     return [];
   }
+  const candidates = Object.entries(installed.plugins).flatMap(
+    ([key, entries]) =>
+      enabled.has(key) && Array.isArray(entries)
+        ? entries.filter(isRecord).map((entry) => ({ key, entry }))
+        : [],
+  );
+  const applicable = await Promise.all(
+    candidates.map(({ entry }) => appliesToSession(entry, { cwd, gitRoot })),
+  );
   const installPaths = new Map<string, string>();
-  for (const [key, entries] of Object.entries(installed.plugins)) {
-    if (!enabled.has(key) || !Array.isArray(entries)) {
-      continue;
+  candidates.forEach(({ key, entry }, i) => {
+    if (applicable[i] && typeof entry.installPath === "string") {
+      installPaths.set(entry.installPath, key);
     }
-    for (const entry of entries) {
-      if (
-        isRecord(entry) && typeof entry.installPath === "string" &&
-        appliesToProject(entry, projectClaudeDir)
-      ) {
-        installPaths.set(entry.installPath, key);
-      }
-    }
-  }
+  });
   const groups = await Promise.all(
     [...installPaths].map(async ([installPath, key]) =>
       collectCommandsAndSkills(
