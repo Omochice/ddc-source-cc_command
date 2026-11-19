@@ -13,11 +13,16 @@ const MAX_COMMAND_DEPTH = 16;
  * list rather than an error.
  *
  * @param configDir Absolute path to a Claude config directory (e.g. `~/.claude`).
+ * @param namespace Optional prefix joined with `:` in front of every word, as Claude Code does for plugin commands and skills.
  */
-export async function collectGlobal(configDir: string): Promise<Item[]> {
+export async function collectGlobal(
+  configDir: string,
+  namespace?: string,
+): Promise<Item[]> {
+  const prefix = namespace == null ? [] : [namespace];
   const [commands, skills] = await Promise.all([
-    collectCommands(join(configDir, "commands"), []),
-    collectSkills(join(configDir, "skills")),
+    collectCommands(join(configDir, "commands"), prefix),
+    collectSkills(join(configDir, "skills"), prefix),
   ]);
   return [...commands, ...skills];
 }
@@ -64,10 +69,13 @@ async function commandEntryItems(
   return info === "" ? [{ word }] : [{ word, info }];
 }
 
-async function collectSkills(skillsDir: string): Promise<Item[]> {
+async function collectSkills(
+  skillsDir: string,
+  prefix: string[],
+): Promise<Item[]> {
   const entries = await readDirEntries(skillsDir);
   const items = await Promise.all(
-    entries.map((entry) => skillEntryItem(skillsDir, entry)),
+    entries.map((entry) => skillEntryItem(skillsDir, entry, prefix)),
   );
   return items.filter((item): item is Item => item != null);
 }
@@ -75,6 +83,7 @@ async function collectSkills(skillsDir: string): Promise<Item[]> {
 async function skillEntryItem(
   skillsDir: string,
   entry: Deno.DirEntry,
+  prefix: string[],
 ): Promise<Item | null> {
   if (entry.name.startsWith(".")) {
     return null;
@@ -88,7 +97,7 @@ async function skillEntryItem(
   if (!(await isFile(skillFile))) {
     return null;
   }
-  const word = `/${entry.name}`;
+  const word = `/${[...prefix, entry.name].join(":")}`;
   const text = await readTextFileSafe(skillFile);
   if (text == null) {
     return { word };
@@ -141,19 +150,37 @@ export async function collectLocal(
   startDir: string,
   homeDir: string,
 ): Promise<Item[]> {
+  const dotClaude = await findProjectClaudeDir(startDir, homeDir);
+  return dotClaude == null ? [] : await collectGlobal(dotClaude);
+}
+
+/**
+ * Finds the nearest project-local `.claude` directory.
+ *
+ * Walks up from `startDir` toward the filesystem root and stops at `homeDir`
+ * so that the user's global config is never mistaken for a project's.
+ *
+ * @param startDir Directory to start searching from (typically the cwd).
+ * @param homeDir The user's home directory; the search never enters or passes it.
+ * @returns The absolute path of the `.claude` directory, or `null` if none exists.
+ */
+export async function findProjectClaudeDir(
+  startDir: string,
+  homeDir: string,
+): Promise<string | null> {
   const home = resolve(homeDir);
   let current = resolve(startDir);
   while (true) {
     if (current === home) {
-      return [];
+      return null;
     }
     const candidate = join(current, ".claude");
     if (await isDirectory(candidate)) {
-      return await collectGlobal(candidate);
+      return candidate;
     }
     const parent = dirname(current);
     if (parent === current) {
-      return [];
+      return null;
     }
     current = parent;
   }
