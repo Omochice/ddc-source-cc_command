@@ -2,7 +2,11 @@ import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { join } from "jsr:@std/path@1.1.6";
 
 import { isRecord, type JsonObject, readJson } from "./json.ts";
-import { collectCommandsAndSkills } from "./user-define.ts";
+import {
+  collectCommands,
+  collectSkills,
+  prefixedSkillWord,
+} from "./user-define.ts";
 
 async function readManifest(installPath: string): Promise<JsonObject> {
   const manifest = await readJson(
@@ -28,5 +32,9 @@ export async function collectPluginContents(
   const namespace = typeof manifest.name === "string" && manifest.name !== ""
     ? manifest.name
     : id.split("@")[0];
-  return collectCommandsAndSkills(installPath, namespace);
+  const [commands, skills] = await Promise.all([
+    collectCommands(join(installPath, "commands"), [namespace]),
+    collectSkills(join(installPath, "skills"), prefixedSkillWord([namespace])),
+  ]);
+  return [...commands, ...skills];
 }
