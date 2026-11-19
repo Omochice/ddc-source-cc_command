@@ -1,7 +1,7 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
-import { collectGlobal } from "./user-define.ts";
+import { collectCommandsAndSkills } from "./user-define.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -128,7 +128,10 @@ export async function collectPlugins(
   }
   const groups = await Promise.all(
     [...installPaths].map(async ([installPath, key]) =>
-      collectGlobal(installPath, await resolvePluginName(installPath, key))
+      collectCommandsAndSkills(
+        installPath,
+        await resolvePluginName(installPath, key),
+      )
     ),
   );
   return groups.flat();

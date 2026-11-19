@@ -6,23 +6,23 @@ import { parseDescription } from "../../ddc-source-cc_command/parse-frontmatter/
 const MAX_COMMAND_DEPTH = 16;
 
 /**
- * Collects user-defined commands and skills under a Claude config directory.
+ * Collects commands and skills from a directory laid out like `.claude`.
  *
- * Reads `<configDir>/commands` recursively and `<configDir>/skills` at one
- * level, returning ddc completion items. Missing directories yield an empty
- * list rather than an error.
+ * Reads `<dir>/commands` recursively and `<dir>/skills` at one level,
+ * returning ddc completion items.
+ * Missing directories yield an empty list rather than an error.
  *
- * @param configDir Absolute path to a Claude config directory (e.g. `~/.claude`).
+ * @param dir Absolute path to a config directory, project `.claude` directory, or plugin install path.
  * @param namespace Optional prefix joined with `:` in front of every word, as Claude Code does for plugin commands and skills.
  */
-export async function collectGlobal(
-  configDir: string,
+export async function collectCommandsAndSkills(
+  dir: string,
   namespace?: string,
 ): Promise<Item[]> {
   const prefix = namespace == null ? [] : [namespace];
   const [commands, skills] = await Promise.all([
-    collectCommands(join(configDir, "commands"), prefix),
-    collectSkills(join(configDir, "skills"), prefix),
+    collectCommands(join(dir, "commands"), prefix),
+    collectSkills(join(dir, "skills"), prefix),
   ]);
   return [...commands, ...skills];
 }
