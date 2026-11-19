@@ -61,14 +61,15 @@ export class Source extends BaseSource<Params> {
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
+    const cwd = await getcwd(denops);
     const projectClaudeDir = this.#home
-      ? await findProjectClaudeDir(await getcwd(denops), this.#home)
+      ? await findProjectClaudeDir(cwd, this.#home)
       : null;
     const tasks: Promise<Item[]>[] = [];
     if (this.#configDir) {
       tasks.push(
         collectCommandsAndSkills(this.#configDir),
-        collectPlugins(this.#configDir, projectClaudeDir),
+        collectPlugins(this.#configDir, { cwd, homeDir: this.#home }),
       );
     }
     if (projectClaudeDir != null) {

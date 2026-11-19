@@ -62,7 +62,8 @@ async function installPlugin(
 describe("collectPlugins", () => {
   it("returns [] when installed_plugins.json is missing", async () => {
     await withTempDir(async (configDir) => {
-      expect(await collectPlugins(configDir, null)).toEqual([]);
+      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+        .toEqual([]);
     });
   });
 
@@ -73,7 +74,8 @@ describe("collectPlugins", () => {
         join(configDir, "plugins", "installed_plugins.json"),
         "{not json",
       );
-      expect(await collectPlugins(configDir, null)).toEqual([]);
+      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+        .toEqual([]);
     });
   });
 
@@ -84,7 +86,8 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "off@mkt": false },
       });
-      expect(await collectPlugins(configDir, null)).toEqual([]);
+      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+        .toEqual([]);
     });
   });
 
@@ -94,7 +97,10 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "tools@mkt": true },
       });
-      const items = await collectPlugins(configDir, null);
+      const items = await collectPlugins(configDir, {
+        cwd: configDir,
+        homeDir: "",
+      });
       expect(items.map((i) => i.word).sort()).toEqual([
         "/tools:hello",
         "/tools:lint",
@@ -114,7 +120,10 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "tools@mkt": true },
       });
-      const items = await collectPlugins(configDir, null);
+      const items = await collectPlugins(configDir, {
+        cwd: configDir,
+        homeDir: "",
+      });
       expect(items.map((i) => i.word)).toContain("/renamed:hello");
       expect(items.map((i) => i.word)).not.toContain("/tools:hello");
     });
@@ -123,7 +132,9 @@ describe("collectPlugins", () => {
   it("lets project settings override user settings, local over shared", async () => {
     await withTempDir(async (tmp) => {
       const configDir = join(tmp, "config");
-      const dotClaude = join(tmp, "project", ".claude");
+      const homeDir = join(tmp, "home");
+      const projectRoot = join(tmp, "project");
+      const dotClaude = join(projectRoot, ".claude");
       await installPlugin(configDir, tmp, "a@mkt");
       await installPlugin(configDir, tmp, "b@mkt");
       await writeJson(join(configDir, "settings.json"), {
@@ -132,20 +143,25 @@ describe("collectPlugins", () => {
       await writeJson(join(dotClaude, "settings.json"), {
         enabledPlugins: { "a@mkt": false, "b@mkt": true },
       });
-      const shared = await collectPlugins(configDir, dotClaude);
+      const shared = await collectPlugins(configDir, {
+        cwd: projectRoot,
+        homeDir,
+      });
       expect(shared.every((i) => i.word.startsWith("/b:"))).toBe(true);
       expect(shared.length).toBe(3);
 
       await writeJson(join(dotClaude, "settings.local.json"), {
         enabledPlugins: { "b@mkt": false },
       });
-      expect(await collectPlugins(configDir, dotClaude)).toEqual([]);
+      expect(await collectPlugins(configDir, { cwd: projectRoot, homeDir }))
+        .toEqual([]);
     });
   });
 
   it("offers project-scoped plugins only inside that project", async () => {
     await withTempDir(async (tmp) => {
       const configDir = join(tmp, "config");
+      const homeDir = join(tmp, "home");
       const projectRoot = join(tmp, "project");
       const dotClaude = join(projectRoot, ".claude");
       await installPlugin(configDir, tmp, "p@mkt", {
@@ -155,10 +171,14 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "p@mkt": true },
       });
-      expect((await collectPlugins(configDir, dotClaude)).length).toBe(3);
-      expect(await collectPlugins(configDir, null)).toEqual([]);
+      await Deno.mkdir(dotClaude, { recursive: true });
       expect(
-        await collectPlugins(configDir, join(tmp, "other", ".claude")),
+        (await collectPlugins(configDir, { cwd: projectRoot, homeDir })).length,
+      ).toBe(3);
+      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+        .toEqual([]);
+      expect(
+        await collectPlugins(configDir, { cwd: join(tmp, "other"), homeDir }),
       ).toEqual([]);
     });
   });

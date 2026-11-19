@@ -1,9 +1,20 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
-import { collectCommandsAndSkills } from "./user-define.ts";
+import {
+  collectCommandsAndSkills,
+  findProjectClaudeDir,
+} from "./user-define.ts";
 
 type JsonObject = Record<string, unknown>;
+
+/**
+ * The parts of a Claude Code session that decide which plugins apply.
+ */
+export type PluginSession = {
+  cwd: string;
+  homeDir: string;
+};
 
 function isRecord(value: unknown): value is JsonObject {
   return typeof value === "object" && value != null && !Array.isArray(value);
@@ -99,12 +110,17 @@ function appliesToProject(
  * Missing or malformed files are skipped rather than reported.
  *
  * @param configDir Absolute path to a Claude config directory (e.g. `~/.claude`).
- * @param projectClaudeDir The nearest project `.claude` directory, or `null` outside a project.
+ * @param session Where the Claude Code session runs.
+ * @param session.cwd The session's working directory.
+ * @param session.homeDir The user's home directory, or "" when unknown.
  */
 export async function collectPlugins(
   configDir: string,
-  projectClaudeDir: string | null,
+  session: PluginSession,
 ): Promise<Item[]> {
+  const projectClaudeDir = session.homeDir
+    ? await findProjectClaudeDir(session.cwd, session.homeDir)
+    : null;
   const [installed, enabled] = await Promise.all([
     readJson(join(configDir, "plugins", "installed_plugins.json")),
     resolveEnabled(configDir, projectClaudeDir),
