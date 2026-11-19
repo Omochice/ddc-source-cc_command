@@ -3,18 +3,11 @@ import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
 import { resolveEnabledPlugins } from "./enabled-plugins.ts";
 import { isRecord, type JsonObject, readJson } from "./json.ts";
+import type { Session } from "./session.ts";
 import {
   collectCommandsAndSkills,
   findProjectClaudeDir,
 } from "./user-define.ts";
-
-/**
- * The parts of a Claude Code session that decide which plugins apply.
- */
-export type PluginSession = {
-  cwd: string;
-  homeDir: string;
-};
 
 async function resolvePluginName(
   installPath: string,
@@ -56,26 +49,23 @@ function appliesToProject(
  * Collects namespaced commands and skills of enabled Claude Code plugins.
  *
  * Reads `<configDir>/plugins/installed_plugins.json` and keeps only the
- * plugins enabled through `enabledPlugins` in the user settings and, when a
- * project is given, the project's `settings.json` and `settings.local.json`.
+ * plugins that the settings files enable through `enabledPlugins`.
  * Words take the form `/<plugin>:<command>` or `/<plugin>:<skill>`.
  * Missing or malformed files are skipped rather than reported.
  *
  * @param configDir Absolute path to a Claude config directory (e.g. `~/.claude`).
  * @param session Where the Claude Code session runs.
- * @param session.cwd The session's working directory.
- * @param session.homeDir The user's home directory, or "" when unknown.
  */
 export async function collectPlugins(
   configDir: string,
-  session: PluginSession,
+  session: Session,
 ): Promise<Item[]> {
   const projectClaudeDir = session.homeDir
     ? await findProjectClaudeDir(session.cwd, session.homeDir)
     : null;
   const [installed, enabled] = await Promise.all([
     readJson(join(configDir, "plugins", "installed_plugins.json")),
-    resolveEnabledPlugins(configDir, projectClaudeDir),
+    resolveEnabledPlugins(configDir, session),
   ]);
   if (!isRecord(installed) || !isRecord(installed.plugins)) {
     return [];
