@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Omochice/ddc-source-cc_command/compare/v1.0.3...v1.1.0) (2026-11-19)
+
+
+### Features
+
+* complete commands and skills of installed plugins ([#68](https://github.com/Omochice/ddc-source-cc_command/issues/68)) ([487c77b](https://github.com/Omochice/ddc-source-cc_command/commit/487c77bb8234269326acd80128ca0a279088ab7f))
+
 ## [1.0.3](https://github.com/Omochice/ddc-source-cc_command/compare/v1.0.2...v1.0.3) (2026-11-14)
 
 
