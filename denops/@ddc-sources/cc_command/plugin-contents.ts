@@ -8,7 +8,7 @@ import {
   SEPARATOR,
 } from "jsr:@std/path@1.1.6";
 
-import { parseDescription } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
+import { parseFrontmatter } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
 import { pathKind } from "./fs.ts";
 import { isRecord, type JsonObject, readJson } from "./json.ts";
 import {
@@ -84,7 +84,7 @@ async function commandMapItem(
   if (typeof entry.content !== "string" || entry.content === "") {
     return null;
   }
-  const info = declared ?? parseDescription(entry.content);
+  const info = declared ?? parseFrontmatter(entry.content).description;
   return info === "" ? { word } : { word, info };
 }
 

@@ -1,41 +1,43 @@
 import { describe, it } from "jsr:@std/testing@1.0.21/bdd";
 import { expect } from "jsr:@std/expect@1.0.20";
-import { parseDescription } from "./mod.ts";
+import { parseFrontmatter } from "./mod.ts";
 
-describe("parseDescription", () => {
+describe("parseFrontmatter", () => {
   describe("with valid YAML frontmatter (parsed by std)", () => {
     it("returns a plain string description", () => {
       const text = "---\ndescription: hello\n---\nbody\n";
-      expect(parseDescription(text)).toBe("hello");
+      expect(parseFrontmatter(text).description).toBe("hello");
     });
 
     it("returns a literal block scalar with its trailing newline", () => {
       const text = "---\ndescription: |\n  foo\n  bar\n---\n";
-      expect(parseDescription(text)).toBe("foo\nbar\n");
+      expect(parseFrontmatter(text).description).toBe("foo\nbar\n");
     });
 
     it("returns a folded block scalar joined with spaces", () => {
       const text = "---\ndescription: >\n  foo\n  bar\n---\n";
-      expect(parseDescription(text)).toBe("foo bar\n");
+      expect(parseFrontmatter(text).description).toBe("foo bar\n");
     });
 
     it("returns a quoted string with quotes stripped", () => {
       const text = '---\ndescription: "with: colon"\n---\n';
-      expect(parseDescription(text)).toBe("with: colon");
+      expect(parseFrontmatter(text).description).toBe("with: colon");
     });
 
     it("returns empty when frontmatter has no description", () => {
       const text = "---\nname: foo\n---\n";
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
 
     it("returns empty when description is not a string", () => {
       const text = "---\ndescription:\n  - a\n  - b\n---\n";
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
 
     it("returns empty when text has no frontmatter", () => {
-      expect(parseDescription("just a body, no frontmatter")).toBe("");
+      expect(parseFrontmatter("just a body, no frontmatter").description).toBe(
+        "",
+      );
     });
   });
 
@@ -49,7 +51,9 @@ describe("parseDescription", () => {
         "---",
         "",
       ].join("\n");
-      expect(parseDescription(text)).toBe("Validate implementation");
+      expect(parseFrontmatter(text).description).toBe(
+        "Validate implementation",
+      );
     });
 
     it("recovers a literal block description (`|`) past an invalid field", () => {
@@ -62,7 +66,7 @@ describe("parseDescription", () => {
         "---",
         "",
       ].join("\n");
-      expect(parseDescription(text)).toBe("foo\nbar\n");
+      expect(parseFrontmatter(text).description).toBe("foo\nbar\n");
     });
 
     it("recovers a folded block description (`>`) past an invalid field", () => {
@@ -75,7 +79,7 @@ describe("parseDescription", () => {
         "---",
         "",
       ].join("\n");
-      expect(parseDescription(text)).toBe("foo bar\n");
+      expect(parseFrontmatter(text).description).toBe("foo bar\n");
     });
 
     it("strips surrounding double quotes", () => {
@@ -85,7 +89,7 @@ describe("parseDescription", () => {
         "argument-hint: [a] [b]",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("quoted value");
+      expect(parseFrontmatter(text).description).toBe("quoted value");
     });
 
     it("strips surrounding single quotes", () => {
@@ -95,7 +99,7 @@ describe("parseDescription", () => {
         "argument-hint: [a] [b]",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("quoted value");
+      expect(parseFrontmatter(text).description).toBe("quoted value");
     });
 
     it("returns empty when fallback value is a YAML boolean", () => {
@@ -105,7 +109,7 @@ describe("parseDescription", () => {
         "argument-hint: [a] [b]",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
 
     it("returns empty when fallback value is a YAML integer", () => {
@@ -115,7 +119,7 @@ describe("parseDescription", () => {
         "argument-hint: [a] [b]",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
 
     it("returns empty when fallback value is YAML null", () => {
@@ -125,7 +129,7 @@ describe("parseDescription", () => {
         "argument-hint: [a] [b]",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
 
     it("returns empty when fallback value is empty (YAML null)", () => {
@@ -135,7 +139,7 @@ describe("parseDescription", () => {
         "argument-hint: [a] [b]",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
 
     it("returns empty when fallback finds no description line", () => {
@@ -145,7 +149,7 @@ describe("parseDescription", () => {
         "allowed-tools: Bash",
         "---",
       ].join("\n");
-      expect(parseDescription(text)).toBe("");
+      expect(parseFrontmatter(text).description).toBe("");
     });
   });
 });

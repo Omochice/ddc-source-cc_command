@@ -1,7 +1,7 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
 import { basename, dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
-import { parseDescription } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
+import { parseFrontmatter } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
 import { pathKind, readDirEntries, readTextFileSafe } from "./fs.ts";
 
 const MAX_COMMAND_DEPTH = 16;
@@ -100,7 +100,7 @@ export async function commandItem(path: string, word: string): Promise<Item> {
   if (text == null) {
     return { word };
   }
-  const info = parseDescription(text);
+  const info = parseFrontmatter(text).description;
   return info === "" ? { word } : { word, info };
 }
 
@@ -151,7 +151,7 @@ export async function skillItem(
   if (text == null) {
     return item;
   }
-  const description = parseDescription(text);
+  const description = parseFrontmatter(text).description;
   return description === "" ? item : { ...item, info: description };
 }
 
