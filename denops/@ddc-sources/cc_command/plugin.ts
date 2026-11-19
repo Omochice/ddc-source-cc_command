@@ -105,13 +105,13 @@ export async function collectPlugins(
   configDir: string,
   projectClaudeDir: string | null,
 ): Promise<Item[]> {
-  const installed = await readJson(
-    join(configDir, "plugins", "installed_plugins.json"),
-  );
+  const [installed, enabled] = await Promise.all([
+    readJson(join(configDir, "plugins", "installed_plugins.json")),
+    resolveEnabled(configDir, projectClaudeDir),
+  ]);
   if (!isRecord(installed) || !isRecord(installed.plugins)) {
     return [];
   }
-  const enabled = await resolveEnabled(configDir, projectClaudeDir);
   const installPaths = new Map<string, string>();
   for (const [key, entries] of Object.entries(installed.plugins)) {
     if (!enabled.has(key) || !Array.isArray(entries)) {
