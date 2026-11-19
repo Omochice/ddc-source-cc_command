@@ -94,7 +94,7 @@ describe("collectCommandsAndSkills", () => {
       });
     });
 
-    it("uses the skill directory name, not the frontmatter name", async () => {
+    it("uses the frontmatter name over the skill directory name", async () => {
       await withTempConfigDir(async (configDir) => {
         const skillDir = join(configDir, "skills", "actual-dir");
         await Deno.mkdir(skillDir, { recursive: true });
@@ -105,7 +105,37 @@ describe("collectCommandsAndSkills", () => {
 
         const items = await collectCommandsAndSkills(configDir);
 
-        expect(items).toEqual([{ word: "/actual-dir", info: "d" }]);
+        expect(items).toEqual([{ word: "/misleading-name", info: "d" }]);
+      });
+    });
+
+    it("keeps the directory name when the frontmatter name is blank", async () => {
+      await withTempConfigDir(async (configDir) => {
+        const skillDir = join(configDir, "skills", "actual-dir");
+        await Deno.mkdir(skillDir, { recursive: true });
+        await Deno.writeTextFile(
+          join(skillDir, "SKILL.md"),
+          '---\nname: "  "\n---\n',
+        );
+
+        const items = await collectCommandsAndSkills(configDir);
+
+        expect(items).toEqual([{ word: "/actual-dir" }]);
+      });
+    });
+
+    it("ignores the frontmatter name of a command file", async () => {
+      await withTempConfigDir(async (configDir) => {
+        const commandsDir = join(configDir, "commands");
+        await Deno.mkdir(commandsDir, { recursive: true });
+        await Deno.writeTextFile(
+          join(commandsDir, "foo.md"),
+          "---\nname: bar\n---\n",
+        );
+
+        const items = await collectCommandsAndSkills(configDir);
+
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
 

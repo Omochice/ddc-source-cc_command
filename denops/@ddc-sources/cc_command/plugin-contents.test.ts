@@ -172,6 +172,45 @@ describe("collectPluginContents", () => {
     });
   });
 
+  describe("skill frontmatter name", () => {
+    it("replaces the directory name after the namespace", async () => {
+      await withPlugin(async (root) => {
+        await write(
+          join(root, "skills", "review", "SKILL.md"),
+          "---\nname: fancy.check\n---\n",
+        );
+        expect(await wordsOf(root)).toEqual(["/tools:fancy.check"]);
+      });
+    });
+
+    it("is not prefixed twice when it already carries the namespace", async () => {
+      await withPlugin(async (root) => {
+        await write(
+          join(root, "skills", "review", "SKILL.md"),
+          "---\nname: tools:fancy\n---\n",
+        );
+        expect(await wordsOf(root)).toEqual(["/tools:fancy"]);
+      });
+    });
+
+    it("names a root SKILL.md", async () => {
+      await withPlugin(async (root) => {
+        await write(join(root, "SKILL.md"), "---\nname: review\n---\n");
+        expect(await wordsOf(root)).toEqual(["/tools:review"]);
+      });
+    });
+
+    it("does not rename commands", async () => {
+      await withPlugin(async (root) => {
+        await write(
+          join(root, "commands", "hello.md"),
+          "---\nname: other\n---\n",
+        );
+        expect(await wordsOf(root)).toEqual(["/tools:hello"]);
+      });
+    });
+  });
+
   describe("SKILL.md at the plugin root", () => {
     it("loads as one skill named after the plugin directory", async () => {
       await withPlugin(async (root) => {

@@ -7,16 +7,25 @@ import { pathKind, readDirEntries, readTextFileSafe } from "./fs.ts";
 const MAX_COMMAND_DEPTH = 16;
 
 /**
- * Builds the completion word of a skill from the name of its directory.
+ * Builds the completion word of a skill.
+ *
+ * @param directoryName Name of the directory holding `SKILL.md`.
+ * @param frontmatterName The `name` in the frontmatter of `SKILL.md`, or "" when it declares none.
  */
-export type SkillWord = (directoryName: string) => string;
+export type SkillWord = (
+  directoryName: string,
+  frontmatterName: string,
+) => string;
 
 /**
- * Returns a {@link SkillWord} that joins `prefix` and the directory name with
- * `:`, as Claude Code does for skills under a `skills` directory.
+ * Returns a {@link SkillWord} that joins `prefix` and the skill name with `:`.
+ *
+ * As in Claude Code, the frontmatter `name` takes the place of the directory
+ * name when it is set.
  */
 export function prefixedSkillWord(prefix: string[]): SkillWord {
-  return (directoryName) => `/${[...prefix, directoryName].join(":")}`;
+  return (directoryName, frontmatterName) =>
+    `/${[...prefix, frontmatterName.trim() || directoryName].join(":")}`;
 }
 
 /**
@@ -146,12 +155,12 @@ export async function skillItem(
   if (await pathKind(skillFile) !== "file") {
     return null;
   }
-  const item = { word: word(basename(skillDir)) };
   const text = await readTextFileSafe(skillFile);
   if (text == null) {
-    return item;
+    return { word: word(basename(skillDir), "") };
   }
-  const description = parseFrontmatter(text).description;
+  const { name, description } = parseFrontmatter(text);
+  const item = { word: word(basename(skillDir), name) };
   return description === "" ? item : { ...item, info: description };
 }
 

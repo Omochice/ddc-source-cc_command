@@ -126,12 +126,18 @@ async function pluginCommands(
 }
 
 /**
- * Claude Code turns every character of a plugin skill's directory name
- * outside `[A-Za-z0-9_-]` into `-`.
+ * Claude Code shows a plugin skill's frontmatter `name` as written, adding
+ * the namespace unless the name already starts with it.
+ * Only the directory name fallback has every character outside
+ * `[A-Za-z0-9_-]` turned into `-`.
  */
 function pluginSkillWord(namespace: string): SkillWord {
-  return (directoryName) =>
-    `/${namespace}:${directoryName.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const prefix = `${namespace}:`;
+  return (directoryName, frontmatterName) => {
+    const name = frontmatterName.trim();
+    const own = name.startsWith(prefix) ? name.slice(prefix.length) : name;
+    return `/${prefix}${own || directoryName.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  };
 }
 
 /**
@@ -146,7 +152,7 @@ async function skillsAt(dir: string, word: SkillWord): Promise<Item[]> {
 /**
  * A `skills` key in the manifest adds to the default `skills/` scan.
  * Without either, a `SKILL.md` at the plugin root makes the whole plugin one
- * skill, named after the plugin directory.
+ * skill, named after the plugin directory unless its frontmatter sets `name`.
  */
 async function pluginSkills(
   root: string,

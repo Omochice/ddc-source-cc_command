@@ -8,10 +8,12 @@ import { test as hasFrontmatter } from "jsr:@std/front-matter@1.0.9/test";
  */
 export type Frontmatter = {
   description: string;
+  /** The `name` a skill declares for its command. */
+  name: string;
 };
 
 function fieldsOf(read: (key: string) => string): Frontmatter {
-  return { description: read("description") };
+  return { description: read("description"), name: read("name") };
 }
 
 /**

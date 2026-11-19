@@ -41,6 +41,34 @@ describe("parseFrontmatter", () => {
     });
   });
 
+  describe("name", () => {
+    it("returns the name alongside the description", () => {
+      const text = "---\nname: deploy\ndescription: ship it\n---\n";
+      expect(parseFrontmatter(text)).toEqual({
+        name: "deploy",
+        description: "ship it",
+      });
+    });
+
+    it("returns empty when name is not a string", () => {
+      expect(parseFrontmatter("---\nname: 42\n---\n").name).toBe("");
+    });
+
+    it("recovers the name via fallback when another field has invalid YAML", () => {
+      const text = [
+        "---",
+        "name: deploy",
+        "argument-hint: [a] [b]",
+        "---",
+      ].join("\n");
+      expect(parseFrontmatter(text).name).toBe("deploy");
+    });
+
+    it("returns empty when there is no frontmatter", () => {
+      expect(parseFrontmatter("body").name).toBe("");
+    });
+  });
+
   describe("with invalid YAML frontmatter (handled by fallback)", () => {
     it("recovers a plain description when another field has invalid YAML", () => {
       const text = [
