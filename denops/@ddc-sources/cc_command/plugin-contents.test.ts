@@ -97,13 +97,17 @@ describe("collectPluginContents", () => {
             status: { source: "./commands/status.md" },
             about: { content: `${described("inline")}Explain this plugin.` },
             summary: {
-              source: "./commands/status.md",
+              source: "./commands/summary.md",
               description: "from the manifest",
             },
             bare: { content: "No frontmatter." },
           },
         });
         await write(join(root, "commands", "status.md"), described("on file"));
+        await write(
+          join(root, "commands", "summary.md"),
+          described("overridden"),
+        );
         await write(join(root, "commands", "unlisted.md"));
         const items = await collectPluginContents(root, "tools@mkt");
         expect(sorted(items)).toEqual([
