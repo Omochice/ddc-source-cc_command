@@ -1,7 +1,7 @@
 import { describe, it } from "jsr:@std/testing@1/bdd";
 import { expect } from "jsr:@std/expect@1";
 import { join } from "jsr:@std/path@1";
-import { collectGlobal, collectLocal } from "./user-define.ts";
+import { collectGlobal, findProjectClaudeDir } from "./user-define.ts";
 
 async function withTempConfigDir(
   fn: (configDir: string) => Promise<void>,
@@ -426,39 +426,39 @@ describe("collectGlobal", () => {
   });
 });
 
-describe("collectLocal", () => {
-  it("returns [] when no ancestor has .claude", async () => {
+describe("findProjectClaudeDir", () => {
+  it("returns null when no ancestor has .claude", async () => {
     const home = await Deno.makeTempDir();
     const root = await Deno.makeTempDir();
     try {
       const start = join(root, "a", "b", "c");
       await Deno.mkdir(start, { recursive: true });
 
-      const items = await collectLocal(start, home);
+      const found = await findProjectClaudeDir(start, home);
 
-      expect(items).toEqual([]);
+      expect(found).toBeNull();
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
     }
   });
 
-  it("reads .claude at startDir", async () => {
+  it("finds .claude at startDir", async () => {
     const home = await Deno.makeTempDir();
     const root = await Deno.makeTempDir();
     try {
       await writeCommand(join(root, ".claude"), "foo", "local foo");
 
-      const items = await collectLocal(root, home);
+      const found = await findProjectClaudeDir(root, home);
 
-      expect(items).toEqual([{ word: "/foo", info: "local foo" }]);
+      expect(found).toBe(join(root, ".claude"));
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
     }
   });
 
-  it("walks up to find an ancestor .claude", async () => {
+  it("walks up to an ancestor .claude", async () => {
     const home = await Deno.makeTempDir();
     const root = await Deno.makeTempDir();
     try {
@@ -466,9 +466,9 @@ describe("collectLocal", () => {
       const start = join(root, "a", "b");
       await Deno.mkdir(start, { recursive: true });
 
-      const items = await collectLocal(start, home);
+      const found = await findProjectClaudeDir(start, home);
 
-      expect(items).toEqual([{ word: "/foo", info: "ancestor foo" }]);
+      expect(found).toBe(join(root, ".claude"));
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
@@ -482,9 +482,9 @@ describe("collectLocal", () => {
       await writeCommand(join(home, ".claude"), "global-only", "g");
       await Deno.mkdir(root, { recursive: true });
 
-      const items = await collectLocal(root, home);
+      const found = await findProjectClaudeDir(root, home);
 
-      expect(items).toEqual([]);
+      expect(found).toBeNull();
     } finally {
       await Deno.remove(home, { recursive: true });
     }
@@ -499,9 +499,9 @@ describe("collectLocal", () => {
       const start = join(root, "inner", "deeper");
       await Deno.mkdir(start, { recursive: true });
 
-      const items = await collectLocal(start, home);
+      const found = await findProjectClaudeDir(start, home);
 
-      expect(items).toEqual([{ word: "/inner", info: "inner" }]);
+      expect(found).toBe(join(root, "inner", ".claude"));
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });

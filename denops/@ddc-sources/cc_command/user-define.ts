@@ -137,24 +137,6 @@ async function resolveKind(
 }
 
 /**
- * Collects commands and skills from the nearest project-local `.claude`.
- *
- * Walks up from `startDir` toward the filesystem root, returning items from
- * the first ancestor that contains a `.claude` directory. Stops at `homeDir`
- * so that the user's global config is never picked up as project-local.
- *
- * @param startDir Directory to start searching from (typically the cwd).
- * @param homeDir The user's home directory; the search never enters or passes it.
- */
-export async function collectLocal(
-  startDir: string,
-  homeDir: string,
-): Promise<Item[]> {
-  const dotClaude = await findProjectClaudeDir(startDir, homeDir);
-  return dotClaude == null ? [] : await collectGlobal(dotClaude);
-}
-
-/**
  * Finds the nearest project-local `.claude` directory.
  *
  * Walks up from `startDir` toward the filesystem root and stops at `homeDir`

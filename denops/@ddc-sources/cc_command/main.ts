@@ -12,11 +12,7 @@ import { join } from "jsr:@std/path@1.1.6/join";
 import { builtins } from "./builtin.ts";
 import { findSlashCommandStart } from "./complete-position.ts";
 import { collectPlugins } from "./plugin.ts";
-import {
-  collectGlobal,
-  collectLocal,
-  findProjectClaudeDir,
-} from "./user-define.ts";
+import { collectGlobal, findProjectClaudeDir } from "./user-define.ts";
 
 type Params = Record<string, never>;
 
@@ -62,19 +58,18 @@ export class Source extends BaseSource<Params> {
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
+    const projectClaudeDir = this.#home
+      ? await findProjectClaudeDir(await getcwd(denops), this.#home)
+      : null;
     const tasks: Promise<Item[]>[] = [];
     if (this.#configDir) {
-      tasks.push(collectGlobal(this.#configDir));
+      tasks.push(
+        collectGlobal(this.#configDir),
+        collectPlugins(this.#configDir, projectClaudeDir),
+      );
     }
-    const cwd = await getcwd(denops);
-    if (this.#home) {
-      tasks.push(collectLocal(cwd, this.#home));
-    }
-    if (this.#configDir) {
-      const projectClaudeDir = this.#home
-        ? await findProjectClaudeDir(cwd, this.#home)
-        : null;
-      tasks.push(collectPlugins(this.#configDir, projectClaudeDir));
+    if (projectClaudeDir != null) {
+      tasks.push(collectGlobal(projectClaudeDir));
     }
     const results = await Promise.all(tasks);
     return [...builtins, ...results.flat()];
