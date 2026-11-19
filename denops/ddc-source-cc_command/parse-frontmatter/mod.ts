@@ -19,10 +19,10 @@ function fieldsOf(read: (key: string) => string): Frontmatter {
 /**
  * Reads the fields of YAML frontmatter at the start of `text`.
  *
- * Tries `@std/front-matter` first. When the YAML parser rejects the document
- * (e.g. an `argument-hint: [a] [b]` line where two flow sequences are not
- * separated), falls back to a minimal extractor that only inspects the keys
- * of {@link Frontmatter}.
+ * Tries `@std/front-matter` first.
+ * When the YAML parser rejects the document (e.g. an `argument-hint: [a] [b]`
+ * line where two flow sequences are not separated), falls back to a minimal
+ * extractor that only inspects the keys of {@link Frontmatter}.
  */
 export function parseFrontmatter(text: string): Frontmatter {
   if (!hasFrontmatter(text, ["yaml"])) {
@@ -46,9 +46,10 @@ function rawFrontmatterLines(text: string): string[] {
 }
 
 /**
- * Best-effort extractor used when std/yaml fails. Pulls just the value of
- * `key` from the raw frontmatter lines. Supports plain scalars,
- * single/double quoted scalars, and `|` / `>` block scalars.
+ * Best-effort extractor used when std/yaml fails.
+ * Pulls just the value of `key` from the raw frontmatter lines.
+ * Supports plain scalars, single/double quoted scalars, and `|` / `>` block
+ * scalars.
  */
 function scalarFromRawFrontmatter(lines: string[], key: string): string {
   const keyPattern = new RegExp(`^${key}\\s*:\\s*(.*)$`);
