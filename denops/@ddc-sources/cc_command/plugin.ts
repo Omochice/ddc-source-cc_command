@@ -5,23 +5,7 @@ import { resolveEnabledPlugins } from "./enabled-plugins.ts";
 import { canonicalPath, findGitRoot } from "./git-root.ts";
 import { isRecord, type JsonObject, readJson } from "./json.ts";
 import type { Session } from "./session.ts";
-import { collectCommandsAndSkills } from "./user-define.ts";
-
-async function resolvePluginName(
-  installPath: string,
-  key: string,
-): Promise<string> {
-  const manifest = await readJson(
-    join(installPath, ".claude-plugin", "plugin.json"),
-  );
-  if (
-    isRecord(manifest) && typeof manifest.name === "string" &&
-    manifest.name !== ""
-  ) {
-    return manifest.name;
-  }
-  return key.split("@")[0];
-}
+import { collectPluginContents } from "./plugin-contents.ts";
 
 /**
  * User and managed scope installs apply everywhere.
@@ -86,11 +70,8 @@ export async function collectPlugins(
     }
   });
   const groups = await Promise.all(
-    [...installPaths].map(async ([installPath, key]) =>
-      collectCommandsAndSkills(
-        installPath,
-        await resolvePluginName(installPath, key),
-      )
+    [...installPaths].map(([installPath, key]) =>
+      collectPluginContents(installPath, key)
     ),
   );
   return groups.flat();
