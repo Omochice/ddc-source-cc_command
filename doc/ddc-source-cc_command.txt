@@ -12,8 +12,29 @@ Params		|ddc-source-cc_command-params|
 INTRODUCTION				*ddc-source-cc_command-introduction*
 
 This source collects claude-code skills and commands.
+A skill whose "SKILL.md" frontmatter sets "name" is completed under that
+name.
 It also offers those of plugins installed through claude-code and enabled in
 its settings, namespaced as "/plugin:name".
+
+A plugin is offered when it is installed in
+"plugins/installed_plugins.json" of the claude-code config directory
+($CLAUDE_CONFIG_DIR, or "~/.claude"), its install scope covers the current
+directory or its git repository, and its "enabledPlugins" entry resolves to
+true.
+The entry is looked up in these files, later ones taking precedence:
+
+- the user "settings.json" in the config directory
+- ".claude/settings.json" in the current directory
+- ".claude/settings.local.json" in the current directory and at the root of
+  its git repository
+- the file-based managed settings, "managed-settings.json" and
+  "managed-settings.d/*.json" in the system directory claude-code uses
+
+Managed settings delivered through MDM, the Windows registry, or the
+claude.ai admin console are not read.
+The "commands" and "skills" keys of a plugin's ".claude-plugin/plugin.json"
+are honored.
 
 ==============================================================================
 DEPENDENCIES				*ddc-source-cc_command-dependencies*
