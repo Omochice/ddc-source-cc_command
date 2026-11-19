@@ -11,7 +11,12 @@ import { join } from "jsr:@std/path@1.1.6/join";
 
 import { builtins } from "./builtin.ts";
 import { findSlashCommandStart } from "./complete-position.ts";
-import { collectGlobal, collectLocal } from "./user-define.ts";
+import { collectPlugins } from "./plugin.ts";
+import {
+  collectGlobal,
+  collectLocal,
+  findProjectClaudeDir,
+} from "./user-define.ts";
 
 type Params = Record<string, never>;
 
@@ -20,7 +25,8 @@ type Params = Record<string, never>;
  *
  * Gathers built-in commands together with user-defined commands and skills
  * found under the global Claude config directory and the nearest project-local
- * `.claude` directory.
+ * `.claude` directory, plus namespaced commands and skills of enabled plugins
+ * installed through Claude Code.
  */
 export class Source extends BaseSource<Params> {
   #home: string;
@@ -60,8 +66,15 @@ export class Source extends BaseSource<Params> {
     if (this.#configDir) {
       tasks.push(collectGlobal(this.#configDir));
     }
+    const cwd = await getcwd(denops);
     if (this.#home) {
-      tasks.push(collectLocal(await getcwd(denops), this.#home));
+      tasks.push(collectLocal(cwd, this.#home));
+    }
+    if (this.#configDir) {
+      const projectClaudeDir = this.#home
+        ? await findProjectClaudeDir(cwd, this.#home)
+        : null;
+      tasks.push(collectPlugins(this.#configDir, projectClaudeDir));
     }
     const results = await Promise.all(tasks);
     return [...builtins, ...results.flat()];

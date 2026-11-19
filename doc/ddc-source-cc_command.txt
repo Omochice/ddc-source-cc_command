@@ -12,6 +12,8 @@ Params		|ddc-source-cc_command-params|
 INTRODUCTION				*ddc-source-cc_command-introduction*
 
 This source collects claude-code skills and commands.
+It also offers those of plugins installed through claude-code and enabled in
+its settings, namespaced as "/plugin:name".
 
 ==============================================================================
 DEPENDENCIES				*ddc-source-cc_command-dependencies*
