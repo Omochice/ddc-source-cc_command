@@ -11,6 +11,7 @@ import { join } from "jsr:@std/path@1.1.6/join";
 
 import { builtins } from "./builtin.ts";
 import { findSlashCommandStart } from "./complete-position.ts";
+import { defaultManagedSettingsDir } from "./enabled-plugins.ts";
 import { collectPlugins } from "./plugin.ts";
 import {
   collectCommandsAndSkills,
@@ -30,12 +31,14 @@ type Params = Record<string, never>;
 export class Source extends BaseSource<Params> {
   #home: string;
   #configDir: string;
+  #managedSettingsDir: string | null;
 
   constructor() {
     super();
     this.#home = Deno.env.get("HOME") ?? "";
     this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ||
       (this.#home ? join(this.#home, ".claude") : "");
+    this.#managedSettingsDir = defaultManagedSettingsDir();
   }
 
   /**
@@ -69,7 +72,11 @@ export class Source extends BaseSource<Params> {
     if (this.#configDir) {
       tasks.push(
         collectCommandsAndSkills(this.#configDir),
-        collectPlugins(this.#configDir, { cwd, homeDir: this.#home }),
+        collectPlugins(this.#configDir, {
+          cwd,
+          homeDir: this.#home,
+          managedSettingsDir: this.#managedSettingsDir,
+        }),
       );
     }
     if (projectClaudeDir != null) {

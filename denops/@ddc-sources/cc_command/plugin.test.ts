@@ -2,6 +2,11 @@ import { describe, it } from "jsr:@std/testing@1/bdd";
 import { expect } from "jsr:@std/expect@1";
 import { join } from "jsr:@std/path@1";
 import { collectPlugins } from "./plugin.ts";
+import type { Session } from "./session.ts";
+
+function sessionAt(cwd: string, homeDir = ""): Session {
+  return { cwd, homeDir, managedSettingsDir: null };
+}
 
 async function withTempDir(fn: (dir: string) => Promise<void>): Promise<void> {
   const dir = await Deno.makeTempDir();
@@ -62,7 +67,7 @@ async function installPlugin(
 describe("collectPlugins", () => {
   it("returns [] when installed_plugins.json is missing", async () => {
     await withTempDir(async (configDir) => {
-      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+      expect(await collectPlugins(configDir, sessionAt(configDir)))
         .toEqual([]);
     });
   });
@@ -74,7 +79,7 @@ describe("collectPlugins", () => {
         join(configDir, "plugins", "installed_plugins.json"),
         "{not json",
       );
-      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+      expect(await collectPlugins(configDir, sessionAt(configDir)))
         .toEqual([]);
     });
   });
@@ -86,7 +91,7 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "off@mkt": false },
       });
-      expect(await collectPlugins(configDir, { cwd: configDir, homeDir: "" }))
+      expect(await collectPlugins(configDir, sessionAt(configDir)))
         .toEqual([]);
     });
   });
@@ -97,10 +102,7 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "tools@mkt": true },
       });
-      const items = await collectPlugins(configDir, {
-        cwd: configDir,
-        homeDir: "",
-      });
+      const items = await collectPlugins(configDir, sessionAt(configDir));
       expect(items.map((i) => i.word).sort()).toEqual([
         "/tools:hello",
         "/tools:lint",
@@ -120,10 +122,7 @@ describe("collectPlugins", () => {
       await writeJson(join(configDir, "settings.json"), {
         enabledPlugins: { "tools@mkt": true },
       });
-      const items = await collectPlugins(configDir, {
-        cwd: configDir,
-        homeDir: "",
-      });
+      const items = await collectPlugins(configDir, sessionAt(configDir));
       expect(items.map((i) => i.word)).toContain("/renamed:hello");
       expect(items.map((i) => i.word)).not.toContain("/tools:hello");
     });
@@ -143,17 +142,17 @@ describe("collectPlugins", () => {
       await writeJson(join(dotClaude, "settings.json"), {
         enabledPlugins: { "a@mkt": false, "b@mkt": true },
       });
-      const shared = await collectPlugins(configDir, {
-        cwd: projectRoot,
-        homeDir,
-      });
+      const shared = await collectPlugins(
+        configDir,
+        sessionAt(projectRoot, homeDir),
+      );
       expect(shared.every((i) => i.word.startsWith("/b:"))).toBe(true);
       expect(shared.length).toBe(3);
 
       await writeJson(join(dotClaude, "settings.local.json"), {
         enabledPlugins: { "b@mkt": false },
       });
-      expect(await collectPlugins(configDir, { cwd: projectRoot, homeDir }))
+      expect(await collectPlugins(configDir, sessionAt(projectRoot, homeDir)))
         .toEqual([]);
     });
   });
@@ -174,7 +173,7 @@ describe("collectPlugins", () => {
 
     async function offeredIn(configDir: string, cwd: string): Promise<boolean> {
       await Deno.mkdir(cwd, { recursive: true });
-      const items = await collectPlugins(configDir, { cwd, homeDir: "" });
+      const items = await collectPlugins(configDir, sessionAt(cwd));
       return items.some((i) => i.word === "/p:hello");
     }
 

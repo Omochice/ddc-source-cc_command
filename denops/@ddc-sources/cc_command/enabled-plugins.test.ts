@@ -25,8 +25,14 @@ async function enabledIn(
   configDir: string,
   cwd: string,
   homeDir = "",
+  managedSettingsDir: string | null = null,
 ): Promise<string[]> {
-  return [...await resolveEnabledPlugins(configDir, { cwd, homeDir })].sort();
+  const enabled = await resolveEnabledPlugins(configDir, {
+    cwd,
+    homeDir,
+    managedSettingsDir,
+  });
+  return [...enabled].sort();
 }
 
 describe("resolveEnabledPlugins", () => {
@@ -162,6 +168,85 @@ describe("resolveEnabledPlugins", () => {
         );
         expect(await enabledIn(join(tmp, "config"), join(tmp, "work")))
           .toEqual(["l@m"]);
+      });
+    });
+  });
+
+  describe("managed settings", () => {
+    it("override every other file in both directions", async () => {
+      await withTempDir(async (tmp) => {
+        const managed = join(tmp, "managed");
+        const project = join(tmp, "project");
+        await writeJson(join(project, ".claude", "settings.local.json"), {
+          enabledPlugins: { "forced@m": false, "blocked@m": true },
+        });
+        await writeJson(join(managed, "managed-settings.json"), {
+          enabledPlugins: { "forced@m": true, "blocked@m": false },
+        });
+        expect(await enabledIn(join(tmp, "config"), project, "", managed))
+          .toEqual(["forced@m"]);
+      });
+    });
+
+    it("merge drop-in files after the base file in alphabetical order", async () => {
+      await withTempDir(async (tmp) => {
+        const managed = join(tmp, "managed");
+        const dropIns = join(managed, "managed-settings.d");
+        await writeJson(join(managed, "managed-settings.json"), {
+          enabledPlugins: { "base@m": true, "later@m": true, "kept@m": true },
+        });
+        await writeJson(join(dropIns, "20-second.json"), {
+          enabledPlugins: { "later@m": true, "first@m": true },
+        });
+        await writeJson(join(dropIns, "10-first.json"), {
+          enabledPlugins: { "later@m": false, "first@m": false },
+        });
+        await writeJson(join(dropIns, "30-third.json"), {
+          enabledPlugins: { "base@m": false },
+        });
+        expect(await enabledIn(join(tmp, "config"), tmp, "", managed))
+          .toEqual(["first@m", "kept@m", "later@m"]);
+      });
+    });
+
+    it("ignore hidden and non-JSON drop-in files", async () => {
+      await withTempDir(async (tmp) => {
+        const managed = join(tmp, "managed");
+        const dropIns = join(managed, "managed-settings.d");
+        await writeJson(join(tmp, "config", "settings.json"), {
+          enabledPlugins: { "a@m": true, "b@m": true },
+        });
+        await writeJson(join(dropIns, ".hidden.json"), {
+          enabledPlugins: { "a@m": false },
+        });
+        await writeJson(join(dropIns, "notes.txt"), {
+          enabledPlugins: { "b@m": false },
+        });
+        expect(await enabledIn(join(tmp, "config"), tmp, "", managed))
+          .toEqual(["a@m", "b@m"]);
+      });
+    });
+
+    it("are read from drop-in files alone without a base file", async () => {
+      await withTempDir(async (tmp) => {
+        const managed = join(tmp, "managed");
+        await writeJson(
+          join(managed, "managed-settings.d", "10-plugins.json"),
+          enabling("d@m"),
+        );
+        expect(await enabledIn(join(tmp, "config"), tmp, "", managed))
+          .toEqual(["d@m"]);
+      });
+    });
+
+    it("are not read when no managed directory is given", async () => {
+      await withTempDir(async (tmp) => {
+        const managed = join(tmp, "managed");
+        await writeJson(
+          join(managed, "managed-settings.json"),
+          enabling("m@m"),
+        );
+        expect(await enabledIn(join(tmp, "config"), tmp)).toEqual([]);
       });
     });
   });

@@ -7,4 +7,9 @@ export type Session = {
   cwd: string;
   /** The user's home directory, or "" when unknown. */
   homeDir: string;
+  /**
+   * The system directory holding `managed-settings.json`, or `null` to leave
+   * managed settings out.
+   */
+  managedSettingsDir: string | null;
 };
