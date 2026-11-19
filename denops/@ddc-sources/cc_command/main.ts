@@ -11,7 +11,12 @@ import { join } from "jsr:@std/path@1.1.6/join";
 
 import { builtins } from "./builtin.ts";
 import { findSlashCommandStart } from "./complete-position.ts";
-import { collectGlobal, collectLocal } from "./user-define.ts";
+import { defaultManagedSettingsDir } from "./enabled-plugins.ts";
+import { collectPlugins } from "./plugin.ts";
+import {
+  collectCommandsAndSkills,
+  findProjectClaudeDir,
+} from "./user-define.ts";
 
 type Params = Record<string, never>;
 
@@ -20,17 +25,20 @@ type Params = Record<string, never>;
  *
  * Gathers built-in commands together with user-defined commands and skills
  * found under the global Claude config directory and the nearest project-local
- * `.claude` directory.
+ * `.claude` directory, plus namespaced commands and skills of enabled plugins
+ * installed through Claude Code.
  */
 export class Source extends BaseSource<Params> {
   #home: string;
   #configDir: string;
+  #managedSettingsDir: string | null;
 
   constructor() {
     super();
     this.#home = Deno.env.get("HOME") ?? "";
     this.#configDir = Deno.env.get("CLAUDE_CONFIG_DIR") ||
       (this.#home ? join(this.#home, ".claude") : "");
+    this.#managedSettingsDir = defaultManagedSettingsDir();
   }
 
   /**
@@ -56,12 +64,23 @@ export class Source extends BaseSource<Params> {
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
+    const cwd = await getcwd(denops);
+    const projectClaudeDir = this.#home
+      ? await findProjectClaudeDir(cwd, this.#home)
+      : null;
     const tasks: Promise<Item[]>[] = [];
     if (this.#configDir) {
-      tasks.push(collectGlobal(this.#configDir));
+      tasks.push(
+        collectCommandsAndSkills(this.#configDir),
+        collectPlugins(this.#configDir, {
+          cwd,
+          homeDir: this.#home,
+          managedSettingsDir: this.#managedSettingsDir,
+        }),
+      );
     }
-    if (this.#home) {
-      tasks.push(collectLocal(await getcwd(denops), this.#home));
+    if (projectClaudeDir != null) {
+      tasks.push(collectCommandsAndSkills(projectClaudeDir));
     }
     const results = await Promise.all(tasks);
     return [...builtins, ...results.flat()];

@@ -2,6 +2,8 @@
 
 A ddc.vim source for using claude-code skills and commands.
 
+Commands and skills of enabled plugins are completed as `/plugin:name`.
+
 ## Dependencies
 
 - [vim-denops/denops.vim](https://github.com/vim-denops/denops.vim)

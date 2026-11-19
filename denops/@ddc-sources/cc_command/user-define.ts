@@ -1,31 +1,70 @@
 import type { Item } from "jsr:@shougo/ddc-vim@10.3.0/types";
-import { dirname, join, resolve } from "jsr:@std/path@1.1.6";
+import { basename, dirname, join, resolve } from "jsr:@std/path@1.1.6";
 
-import { parseDescription } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
+import { parseFrontmatter } from "../../ddc-source-cc_command/parse-frontmatter/mod.ts";
+import { pathKind, readDirEntries, readTextFileSafe } from "./fs.ts";
 
 const MAX_COMMAND_DEPTH = 16;
 
 /**
- * Collects user-defined commands and skills under a Claude config directory.
+ * Builds the completion word of a skill.
  *
- * Reads `<configDir>/commands` recursively and `<configDir>/skills` at one
- * level, returning ddc completion items. Missing directories yield an empty
- * list rather than an error.
- *
- * @param configDir Absolute path to a Claude config directory (e.g. `~/.claude`).
+ * @param directoryName Name of the directory holding `SKILL.md`.
+ * @param frontmatterName The `name` in the frontmatter of `SKILL.md`, or "" when it declares none.
  */
-export async function collectGlobal(configDir: string): Promise<Item[]> {
+export type SkillWord = (
+  directoryName: string,
+  frontmatterName: string,
+) => string;
+
+/**
+ * Returns a {@link SkillWord} that joins `prefix` and the skill name with `:`.
+ *
+ * As in Claude Code, the frontmatter `name` takes the place of the directory
+ * name when it is set.
+ */
+export function prefixedSkillWord(prefix: string[]): SkillWord {
+  return (directoryName, frontmatterName) =>
+    `/${[...prefix, frontmatterName.trim() || directoryName].join(":")}`;
+}
+
+/**
+ * Collects commands and skills from a directory laid out like `.claude`.
+ *
+ * Reads `<dir>/commands` recursively and `<dir>/skills` at one level,
+ * returning ddc completion items.
+ * Missing directories yield an empty list rather than an error.
+ *
+ * @param dir Absolute path to a config directory or project `.claude` directory.
+ */
+export async function collectCommandsAndSkills(dir: string): Promise<Item[]> {
   const [commands, skills] = await Promise.all([
-    collectCommands(join(configDir, "commands"), []),
-    collectSkills(join(configDir, "skills")),
+    collectCommands(join(dir, "commands"), []),
+    collectSkills(join(dir, "skills"), prefixedSkillWord([])),
   ]);
   return [...commands, ...skills];
 }
 
-async function collectCommands(
+/**
+ * Collects the `.md` command files under `dir`, recursively.
+ *
+ * Each subdirectory adds its name as a `:`-separated segment, and dotfiles
+ * are skipped.
+ *
+ * @param dir Directory to scan; a missing one yields `[]`.
+ * @param segments Segments placed before every command name, such as a plugin namespace.
+ */
+export function collectCommands(
   dir: string,
   segments: string[],
-  depth = 0,
+): Promise<Item[]> {
+  return collectCommandsBelow(dir, segments, 0);
+}
+
+async function collectCommandsBelow(
+  dir: string,
+  segments: string[],
+  depth: number,
 ): Promise<Item[]> {
   if (depth > MAX_COMMAND_DEPTH) {
     return [];
@@ -47,153 +86,112 @@ async function commandEntryItems(
     return [];
   }
   const path = join(dir, entry.name);
-  const kind = await resolveKind(entry, path);
+  const kind = await pathKind(path, entry);
   if (kind === "directory") {
-    return collectCommands(path, [...segments, entry.name], depth + 1);
+    return collectCommandsBelow(path, [...segments, entry.name], depth + 1);
   }
   if (kind !== "file" || !entry.name.endsWith(".md")) {
     return [];
   }
   const base = entry.name.slice(0, -".md".length);
-  const word = `/${[...segments, base].join(":")}`;
-  const text = await readTextFileSafe(path);
-  if (text == null) {
-    return [{ word }];
-  }
-  const info = parseDescription(text);
-  return info === "" ? [{ word }] : [{ word, info }];
+  return [await commandItem(path, `/${[...segments, base].join(":")}`)];
 }
 
-async function collectSkills(skillsDir: string): Promise<Item[]> {
+/**
+ * Builds the completion item of one command file.
+ *
+ * @param path Path to the command's Markdown file.
+ * @param word The completion word, including the leading `/`.
+ * @returns An item whose `info` is the frontmatter description, when there is one.
+ */
+export async function commandItem(path: string, word: string): Promise<Item> {
+  const text = await readTextFileSafe(path);
+  if (text == null) {
+    return { word };
+  }
+  const info = parseFrontmatter(text).description;
+  return info === "" ? { word } : { word, info };
+}
+
+/**
+ * Collects the skills in `skillsDir`, one per subdirectory holding `SKILL.md`.
+ *
+ * @param skillsDir Directory to scan; a missing one yields `[]`.
+ * @param word Builds each skill's completion word.
+ */
+export async function collectSkills(
+  skillsDir: string,
+  word: SkillWord,
+): Promise<Item[]> {
   const entries = await readDirEntries(skillsDir);
   const items = await Promise.all(
-    entries.map((entry) => skillEntryItem(skillsDir, entry)),
+    entries.map(async (entry) => {
+      if (entry.name.startsWith(".")) {
+        return null;
+      }
+      const path = join(skillsDir, entry.name);
+      if (await pathKind(path, entry) !== "directory") {
+        return null;
+      }
+      return skillItem(path, word);
+    }),
   );
   return items.filter((item): item is Item => item != null);
 }
 
-async function skillEntryItem(
-  skillsDir: string,
-  entry: Deno.DirEntry,
+/**
+ * Builds the completion item of the skill whose `SKILL.md` sits directly in
+ * `skillDir`.
+ *
+ * @param skillDir The skill's own directory.
+ * @param word Builds the completion word from the directory's name.
+ * @returns The item, or `null` when `skillDir` holds no `SKILL.md`.
+ */
+export async function skillItem(
+  skillDir: string,
+  word: SkillWord,
 ): Promise<Item | null> {
-  if (entry.name.startsWith(".")) {
+  const skillFile = join(skillDir, "SKILL.md");
+  if (await pathKind(skillFile) !== "file") {
     return null;
   }
-  const path = join(skillsDir, entry.name);
-  const kind = await resolveKind(entry, path);
-  if (kind !== "directory") {
-    return null;
-  }
-  const skillFile = join(path, "SKILL.md");
-  if (!(await isFile(skillFile))) {
-    return null;
-  }
-  const word = `/${entry.name}`;
   const text = await readTextFileSafe(skillFile);
   if (text == null) {
-    return { word };
+    return { word: word(basename(skillDir), "") };
   }
-  const description = parseDescription(text);
-  if (description === "") {
-    return { word };
-  }
-  return { word, info: description };
-}
-
-async function resolveKind(
-  entry: Deno.DirEntry,
-  path: string,
-): Promise<"file" | "directory" | "other"> {
-  if (entry.isFile) {
-    return "file";
-  }
-  if (entry.isDirectory) {
-    return "directory";
-  }
-  if (!entry.isSymlink) {
-    return "other";
-  }
-  try {
-    const stat = await Deno.stat(path);
-    if (stat.isFile) {
-      return "file";
-    }
-    if (stat.isDirectory) {
-      return "directory";
-    }
-    return "other";
-  } catch {
-    return "other";
-  }
+  const { name, description } = parseFrontmatter(text);
+  const item = { word: word(basename(skillDir), name) };
+  return description === "" ? item : { ...item, info: description };
 }
 
 /**
- * Collects commands and skills from the nearest project-local `.claude`.
+ * Finds the nearest project-local `.claude` directory.
  *
- * Walks up from `startDir` toward the filesystem root, returning items from
- * the first ancestor that contains a `.claude` directory. Stops at `homeDir`
- * so that the user's global config is never picked up as project-local.
+ * Walks up from `startDir` toward the filesystem root and stops at `homeDir`
+ * so that the user's global config is never mistaken for a project's.
  *
  * @param startDir Directory to start searching from (typically the cwd).
  * @param homeDir The user's home directory; the search never enters or passes it.
+ * @returns The absolute path of the `.claude` directory, or `null` if none exists.
  */
-export async function collectLocal(
+export async function findProjectClaudeDir(
   startDir: string,
   homeDir: string,
-): Promise<Item[]> {
+): Promise<string | null> {
   const home = resolve(homeDir);
   let current = resolve(startDir);
   while (true) {
     if (current === home) {
-      return [];
+      return null;
     }
     const candidate = join(current, ".claude");
-    if (await isDirectory(candidate)) {
-      return await collectGlobal(candidate);
+    if (await pathKind(candidate) === "directory") {
+      return candidate;
     }
     const parent = dirname(current);
     if (parent === current) {
-      return [];
+      return null;
     }
     current = parent;
-  }
-}
-
-async function isDirectory(path: string): Promise<boolean> {
-  try {
-    const stat = await Deno.stat(path);
-    return stat.isDirectory;
-  } catch {
-    return false;
-  }
-}
-
-async function isFile(path: string): Promise<boolean> {
-  try {
-    const stat = await Deno.stat(path);
-    return stat.isFile;
-  } catch {
-    return false;
-  }
-}
-
-async function readDirEntries(dir: string): Promise<Deno.DirEntry[]> {
-  try {
-    const entries: Deno.DirEntry[] = [];
-    for await (const entry of Deno.readDir(dir)) {
-      entries.push(entry);
-    }
-    return entries;
-  } catch {
-    return [];
-  }
-}
-
-async function readTextFileSafe(path: string): Promise<string | null> {
-  try {
-    return await Deno.readTextFile(path);
-  } catch (err) {
-    console.warn(`Failed to read "${path}": ${err}`);
-    return null;
   }
 }

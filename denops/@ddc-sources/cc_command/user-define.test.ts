@@ -1,7 +1,10 @@
 import { describe, it } from "jsr:@std/testing@1/bdd";
 import { expect } from "jsr:@std/expect@1";
 import { join } from "jsr:@std/path@1";
-import { collectGlobal, collectLocal } from "./user-define.ts";
+import {
+  collectCommandsAndSkills,
+  findProjectClaudeDir,
+} from "./user-define.ts";
 
 async function withTempConfigDir(
   fn: (configDir: string) => Promise<void>,
@@ -42,19 +45,19 @@ async function writeCommand(
   );
 }
 
-describe("collectGlobal", () => {
+describe("collectCommandsAndSkills", () => {
   describe("basics", () => {
     it("returns [] when configDir does not exist", async () => {
       await withTempConfigDir(async (tmp) => {
         const missing = join(tmp, "does-not-exist");
-        const items = await collectGlobal(missing);
+        const items = await collectCommandsAndSkills(missing);
         expect(items).toEqual([]);
       });
     });
 
     it("returns [] when configDir has no skills/ or commands/", async () => {
       await withTempConfigDir(async (configDir) => {
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
         expect(items).toEqual([]);
       });
     });
@@ -68,7 +71,7 @@ describe("collectGlobal", () => {
           "---\ndescription: Do the foo thing\n---\nbody\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/foo", info: "Do the foo thing" }]);
       });
@@ -83,7 +86,7 @@ describe("collectGlobal", () => {
           "---\nname: foo\ndescription: Do the foo skill\n---\nbody\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([
           { word: "/foo", info: "Do the foo skill" },
@@ -91,7 +94,7 @@ describe("collectGlobal", () => {
       });
     });
 
-    it("uses the skill directory name, not the frontmatter name", async () => {
+    it("uses the frontmatter name over the skill directory name", async () => {
       await withTempConfigDir(async (configDir) => {
         const skillDir = join(configDir, "skills", "actual-dir");
         await Deno.mkdir(skillDir, { recursive: true });
@@ -100,9 +103,39 @@ describe("collectGlobal", () => {
           "---\nname: misleading-name\ndescription: d\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
-        expect(items).toEqual([{ word: "/actual-dir", info: "d" }]);
+        expect(items).toEqual([{ word: "/misleading-name", info: "d" }]);
+      });
+    });
+
+    it("keeps the directory name when the frontmatter name is blank", async () => {
+      await withTempConfigDir(async (configDir) => {
+        const skillDir = join(configDir, "skills", "actual-dir");
+        await Deno.mkdir(skillDir, { recursive: true });
+        await Deno.writeTextFile(
+          join(skillDir, "SKILL.md"),
+          '---\nname: "  "\n---\n',
+        );
+
+        const items = await collectCommandsAndSkills(configDir);
+
+        expect(items).toEqual([{ word: "/actual-dir" }]);
+      });
+    });
+
+    it("ignores the frontmatter name of a command file", async () => {
+      await withTempConfigDir(async (configDir) => {
+        const commandsDir = join(configDir, "commands");
+        await Deno.mkdir(commandsDir, { recursive: true });
+        await Deno.writeTextFile(
+          join(commandsDir, "foo.md"),
+          "---\nname: bar\n---\n",
+        );
+
+        const items = await collectCommandsAndSkills(configDir);
+
+        expect(items).toEqual([{ word: "/foo" }]);
       });
     });
 
@@ -121,7 +154,7 @@ describe("collectGlobal", () => {
           "---\ndescription: s\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         const sorted = [...items].sort((a, b) => a.word.localeCompare(b.word));
         expect(sorted).toEqual([
@@ -142,7 +175,7 @@ describe("collectGlobal", () => {
           "just a body, no frontmatter",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/foo" }]);
       });
@@ -157,7 +190,7 @@ describe("collectGlobal", () => {
           "just a body, no frontmatter",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/foo" }]);
       });
@@ -169,7 +202,7 @@ describe("collectGlobal", () => {
         await Deno.mkdir(dir, { recursive: true });
         await Deno.writeTextFile(join(dir, "foo.md"), "---\nname: foo\n---\n");
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/foo" }]);
       });
@@ -186,7 +219,7 @@ describe("collectGlobal", () => {
           "---\ndescription: Deploy the team service\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([
           { word: "/team:deploy", info: "Deploy the team service" },
@@ -203,7 +236,7 @@ describe("collectGlobal", () => {
           "---\ndescription: deep\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/a:b:c", info: "deep" }]);
       });
@@ -225,7 +258,7 @@ describe("collectGlobal", () => {
           "---\ndescription: real skill\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([
           { word: "/real", info: "real skill" },
@@ -246,7 +279,7 @@ describe("collectGlobal", () => {
           "internal notes",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/foo", info: "d" }]);
       });
@@ -270,7 +303,7 @@ describe("collectGlobal", () => {
           ].join("\n"),
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([
           { word: "/foo", info: "Validate implementation" },
@@ -303,7 +336,7 @@ describe("collectGlobal", () => {
           "---\ndescription: hidden\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/visible", info: "v" }]);
       });
@@ -322,7 +355,7 @@ describe("collectGlobal", () => {
           "---\ndescription: ok\n---\n",
         );
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/ok", info: "ok" }]);
       });
@@ -344,7 +377,7 @@ describe("collectGlobal", () => {
         );
 
         try {
-          const items = await collectGlobal(configDir);
+          const items = await collectCommandsAndSkills(configDir);
           expect(items).toEqual([{ word: "/ok", info: "ok" }]);
         } finally {
           await Deno.chmod(blocked, 0o755);
@@ -369,7 +402,7 @@ describe("collectGlobal", () => {
 
         try {
           const { result } = await captureWarnings(() =>
-            collectGlobal(configDir)
+            collectCommandsAndSkills(configDir)
           );
           const sorted = [...result].sort((a, b) =>
             a.word.localeCompare(b.word)
@@ -398,7 +431,7 @@ describe("collectGlobal", () => {
         );
         await Deno.symlink(target, join(cmds, "linked.md"));
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([{ word: "/linked", info: "linked" }]);
       });
@@ -416,7 +449,7 @@ describe("collectGlobal", () => {
         );
         await Deno.symlink(target, join(skills, "linked-skill"));
 
-        const items = await collectGlobal(configDir);
+        const items = await collectCommandsAndSkills(configDir);
 
         expect(items).toEqual([
           { word: "/linked-skill", info: "linked skill" },
@@ -426,39 +459,39 @@ describe("collectGlobal", () => {
   });
 });
 
-describe("collectLocal", () => {
-  it("returns [] when no ancestor has .claude", async () => {
+describe("findProjectClaudeDir", () => {
+  it("returns null when no ancestor has .claude", async () => {
     const home = await Deno.makeTempDir();
     const root = await Deno.makeTempDir();
     try {
       const start = join(root, "a", "b", "c");
       await Deno.mkdir(start, { recursive: true });
 
-      const items = await collectLocal(start, home);
+      const found = await findProjectClaudeDir(start, home);
 
-      expect(items).toEqual([]);
+      expect(found).toBeNull();
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
     }
   });
 
-  it("reads .claude at startDir", async () => {
+  it("finds .claude at startDir", async () => {
     const home = await Deno.makeTempDir();
     const root = await Deno.makeTempDir();
     try {
       await writeCommand(join(root, ".claude"), "foo", "local foo");
 
-      const items = await collectLocal(root, home);
+      const found = await findProjectClaudeDir(root, home);
 
-      expect(items).toEqual([{ word: "/foo", info: "local foo" }]);
+      expect(found).toBe(join(root, ".claude"));
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
     }
   });
 
-  it("walks up to find an ancestor .claude", async () => {
+  it("walks up to an ancestor .claude", async () => {
     const home = await Deno.makeTempDir();
     const root = await Deno.makeTempDir();
     try {
@@ -466,9 +499,9 @@ describe("collectLocal", () => {
       const start = join(root, "a", "b");
       await Deno.mkdir(start, { recursive: true });
 
-      const items = await collectLocal(start, home);
+      const found = await findProjectClaudeDir(start, home);
 
-      expect(items).toEqual([{ word: "/foo", info: "ancestor foo" }]);
+      expect(found).toBe(join(root, ".claude"));
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
@@ -482,9 +515,9 @@ describe("collectLocal", () => {
       await writeCommand(join(home, ".claude"), "global-only", "g");
       await Deno.mkdir(root, { recursive: true });
 
-      const items = await collectLocal(root, home);
+      const found = await findProjectClaudeDir(root, home);
 
-      expect(items).toEqual([]);
+      expect(found).toBeNull();
     } finally {
       await Deno.remove(home, { recursive: true });
     }
@@ -499,9 +532,9 @@ describe("collectLocal", () => {
       const start = join(root, "inner", "deeper");
       await Deno.mkdir(start, { recursive: true });
 
-      const items = await collectLocal(start, home);
+      const found = await findProjectClaudeDir(start, home);
 
-      expect(items).toEqual([{ word: "/inner", info: "inner" }]);
+      expect(found).toBe(join(root, "inner", ".claude"));
     } finally {
       await Deno.remove(home, { recursive: true });
       await Deno.remove(root, { recursive: true });
